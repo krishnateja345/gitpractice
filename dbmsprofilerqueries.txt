@@ -1,0 +1,44 @@
+profile PLSQL code using DBMS_PROFILER
+
+Create the profiler tables from the table creation script available in oracle home directory
+
+@C:\orclee18c\WINDOWS.X64_180000_db_home_ORACLE18C\rdbms\admin\proftab.sql
+
+** Search for "proftab.sql" in your oracle home directory
+
+
+Scripts to clear the profiler tables
+
+truncate table plsql_profiler_data;
+delete from plsql_profiler_units;
+delete from plsql_profiler_runs;
+
+Invoke "dbms_profiler.start_profiler" to start the profiler and "dbms_profiler.stop_profiler" to stop the profiler.Sample code give below,
+
+exec dbms_profiler.start_profiler ('MY_TEST_PERFORMANCE_RUN1');
+exec proc_a;
+exec dbms_profiler.stop_profiler();
+
+
+Query to find the line wise time taken
+
+SELECT
+plsql_profiler_runs.RUN_DATE, 
+plsql_profiler_runs.RUN_COMMENT,
+plsql_profiler_units.UNIT_TYPE, 
+plsql_profiler_units.UNIT_NAME,
+plsql_profiler_data.LINE#, 
+plsql_profiler_data.TOTAL_OCCUR, 
+plsql_profiler_data.TOTAL_TIME, 
+plsql_profiler_data.MIN_TIME, 
+plsql_profiler_data.MAX_TIME,
+round(plsql_profiler_data.total_time/1000000000) total_time_in_sec,
+trunc(((plsql_profiler_data.total_time)/(sum(plsql_profiler_data.total_time) over()))*100,2) pct_of_time_taken
+FROM
+    plsql_profiler_data,plsql_profiler_runs,plsql_profiler_units
+where plsql_profiler_data.total_time > 0 
+and plsql_profiler_data.runid = plsql_profiler_runs.runid
+and plsql_profiler_units.UNIT_NUMBER = plsql_profiler_data.UNIT_NUMBER
+and plsql_profiler_units.runid = plsql_profiler_runs.runid
+ORDER BY
+    plsql_profiler_data.total_time DESC;
