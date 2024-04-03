@@ -1,0 +1,21 @@
+-------------sql to find the employees who are getting more than average salary in each department-------------
+
+select avg(sal) avgsal,deptno from emp
+group by deptno;
+
+1. select empno,ename,a.deptno,sal,b.avgsal
+from emp a,(select avg(sal) avgsal,deptno from emp
+            group by deptno) b
+where a.deptno=b.deptno and a.sal>b.avgsal
+order by a.deptno;
+
+2. select empno,ename,deptno,sal from emp a
+where a.sal>(select avg(sal) from emp b where b.deptno=a.deptno group by deptno)
+
+3. select * from
+            (
+            select empno,ename,sal,deptno,
+                   avg(sal) over(partition by deptno order by deptno) avsal
+            from emp) where sal>avsal;
+--------------------end --------------------------------------
+
