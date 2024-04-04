@@ -17,4 +17,3 @@ select winner,count(*) matches_won from cricket
 group by winner;
 
 ---------------------end----------------------------------
-
