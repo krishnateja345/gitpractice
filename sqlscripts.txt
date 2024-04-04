@@ -1,1 +1,20 @@
-m
+-----------------Query to generate the Cricket Match Board------------------
+
+with 
+ds1 as      (select TEAM_A teams from cricket
+             union all
+             select TEAM_B from cricket),
+ds2 as      (select teams,count(*) matches_played from ds1
+             group by teams),
+ds3 as      (select winner,count(*) matches_won from cricket
+             group by winner)
+select ds2.teams,ds2.matches_played,nvl(ds3.matches_won,0) matches_won,
+       (ds2.matches_played-nvl(ds3.matches_won,0)) matches_lost
+from ds2 left outer join ds3 on ds2.teams=ds3.winner
+order by ds2.teams;
+
+select winner,count(*) matches_won from cricket
+group by winner;
+
+---------------------end----------------------------------
+
