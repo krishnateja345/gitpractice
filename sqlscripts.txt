@@ -17,3 +17,44 @@ select winner,count(*) matches_won from cricket
 group by winner;
 
 ---------------------end----------------------------------
+
+-----------------------05-04-2024--------------------------------------
+
+select level from dual
+connect by level<=10;
+
+
+with t1(id) as
+(select 1 id from dual
+union all
+select id+1 from t1
+where id<10) select id from t1;
+
+select rownum from
+(
+select 1 from dual
+group by cube(1,2,3)
+) where rownum<=5;
+
+
+select rownum from xmltable('1 to 10');
+
+
+select str,
+       substr(str,level,1) str1,
+       substr(str,length(str)+1-level,1) str2,
+       substr(str,1,level) str3,
+       substr(str,level) str4,
+       rpad(' ',level,' ')||substr(str,level) str5,
+       rpad(' ',length(str)+1-level,' ')||substr(str,1,level) str6,
+       length(str) ln
+from(
+     select 'WELCOME' str from dual
+     )
+connect by level<=length(str);
+
+select rpad('tech',7,'*') from dual;
+
+select 'tech' from dual;
+
+-----------------------------------------end------------------------------------
