@@ -58,3 +58,32 @@ select rpad('tech',7,'*') from dual;
 select 'tech' from dual;
 
 -----------------------------------------end------------------------------------
+
+--------------------------------------06-04-2024-----------------------------------------------
+
+with ds1 as
+(
+select mail_name m from mail_det1 --where rownum=1
+),
+ds2 as (select m,
+       --instr(m,'.',1,1) fdot ,
+       --instr(m,'.',1,2) sdot,
+       instr(m,'@',1) pos
+       from ds1),
+ds3 as (select M, --FDOT, SDOT, POS, 
+       substr(m,1,pos-1) n,
+       substr(m,pos+1) d,
+       instr(substr(m,1,pos-1),'.',1,1) fdot,
+       instr(substr(m,1,pos-1),'.',1,2) sdot
+       from ds2)
+select M, --N,  FDOT, SDOT,
+       /*decode(fdot,0,substr(n,1),substr(n,1,fdot-1)) fname,
+       decode(sdot,0,null,substr(n,fdot+1,sdot-fdot)) mname,
+       decode(fdot+sdot,0,null,substr(n,sdot)) lname*/
+       substr(n,1,decode(fdot,0,length(n),fdot-1)) fname,
+       decode(sdot,0,null,substr(n,fdot+1,sdot-fdot-1)) mname,
+       decode(fdot+sdot,0,null,substr(n,decode(sdot,0,fdot,sdot)+1)) lname,
+       D dname
+from ds3;
+
+-------------------------------------------------end----------------------------------------------------
