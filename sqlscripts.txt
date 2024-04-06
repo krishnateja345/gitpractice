@@ -63,6 +63,28 @@ select 'tech' from dual;
 
 with ds1 as
 (
+select mail_name m from mail_det --where rownum=1
+),
+ds2 as (select m,
+       instr(m,'.',1,1) fdot ,
+       instr(m,'.',1,2) sdot,
+       instr(m,'@',1) pos
+from ds1)
+select M, --FDOT, SDOT, POS,
+       substr(m,1,fdot-1) first_name,
+       substr(m,fdot+1,sdot-fdot-1) middle_name,
+       substr(m,sdot+1,pos-sdot-1) Last_name,
+       substr(m,pos+1) domain_name
+from ds2;
+
+insert into mail_det values('a.b.c@gmail.com');
+insert into mail_det values('abc.bc.cdef@gmail.com');
+commit;
+
+
+
+with ds1 as
+(
 select mail_name m from mail_det1 --where rownum=1
 ),
 ds2 as (select m,
@@ -85,5 +107,4 @@ select M, --N,  FDOT, SDOT,
        decode(fdot+sdot,0,null,substr(n,decode(sdot,0,fdot,sdot)+1)) lname,
        D dname
 from ds3;
-
 -------------------------------------------------end----------------------------------------------------
