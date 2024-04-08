@@ -108,3 +108,106 @@ select M, --N,  FDOT, SDOT,
        D dname
 from ds3;
 -------------------------------------------------end----------------------------------------------------
+----------------------------07-04-2024--------------------------------------------------------
+select empno,ename,sal from emp;
+-------------Oracle SQL Practical question with answer calculate the group salary-----
+select empno,ename,mgr,
+       sys_connect_by_path(ename,'->') lename
+from emp
+start with mgr is null
+connect by prior empno=mgr;
+
+
+select empno,ename,mgr,sal,
+       sys_connect_by_path(ename,'->') lename
+from emp
+start with ename='BLAKE'
+connect by prior empno=mgr;
+
+select empno,ename,sal,(select sum(sal) grpsal
+            from emp
+            start with ename=a.ename
+            connect by prior empno=mgr) grpsal
+from emp a;
+
+-------------inline view to find the emp sal greater than avg salary------------------
+select empno,ename,sal,a.deptno from emp a,
+       (select b.deptno,avg(b.sal) avgsal from emp b 
+        group by b.deptno
+        ) c
+where a.deptno=c.deptno and a.sal>c.avgsal;
+
+----------------corelated query to find the emp sal greater than avg salary----------------
+select a.empno,a.ename,a.sal,a.deptno from emp a
+where sal>(select avg(sal) from emp b
+           where b.deptno=a.deptno
+           group by b.deptno);
+
+
+
+--select * from students;
+
+select DEPT, --CNT, RES, 
+       max(case when year=1 then res end) I_year,
+       max(case when year=2 then res end) II_year,
+       max(case when year=3 then res end) III_year,
+       max(case when year=4 then res end) IV_year
+from 
+            (
+            select dept,year,count(result) cnt,
+                   'P='||count(case when result='P' then result else null end)||
+                   ',F='||count(case when result='F' then result else null end) res
+            from students
+            group by dept,year)
+group by dept;
+
+
+
+
+--select * from students;
+
+select year, --CNT, RES, 
+       max(case when dept='EEE' then res end) EEE,
+       max(case when dept='CSE' then res end) CSE,
+       max(case when dept='CVE' then res end) CVE,
+       max(case when dept='MECH' then res end) MECH,
+	   max(case when dept='ECE' then res end) ECE
+	   
+from 
+            (
+            select dept,year,count(result) cnt,
+                   'P='||count(case when result='P' then result else null end)||
+                   ',F='||count(case when result='F' then result else null end) res
+            from students
+            group by dept,year)
+group by year;
+
+
+
+
+
+
+-----using pivot-----------
+
+select * from
+(
+select dept,year,--count(result) cnt,
+                   'P='||count(case when result='P' then result else null end)||
+                   ',F='||count(case when result='F' then result else null end) res
+            from students
+            group by dept,year
+            order by year)
+pivot(max(res) for dept in('EEE','ECE','CSE','CVE','MECH'))
+order by year;
+
+select * from
+(
+select dept,year,--count(result) cnt,
+                   'P='||count(case when result='P' then result else null end)||
+                   ',F='||count(case when result='F' then result else null end) res
+            from students
+            group by dept,year
+            order by year)
+pivot(max(res) for year in(1 as I_year,2 as II_year,3 as III_year,4 as IV_year))
+order by dept;
+-------------------------------------------end----------------------------------------------------
