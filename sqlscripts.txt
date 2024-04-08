@@ -211,3 +211,80 @@ select dept,year,--count(result) cnt,
 pivot(max(res) for year in(1 as I_year,2 as II_year,3 as III_year,4 as IV_year))
 order by dept;
 -------------------------------------------end----------------------------------------------------
+
+-----------------------08-04-2024  ------------------------------------------------------------
+
+-----------------------------Qwery to find all possible paths for a given cities-----------------------------
+select --a.CITY_ID, 
+       a.CITY_NAME, 
+       --b.CITY_ID city_id2, 
+       b.CITY_NAME CITY_NAME2
+from cities a,cities b
+where a.city_id<b.city_id;
+
+
+select --a.CITY_NAME, 
+       --b.CITY_NAME CITY_NAME2,
+       distinct greatest(a.CITY_NAME,b.CITY_NAME) city1,
+       least(a.CITY_NAME,b.CITY_NAME) city2
+from cities a,cities b
+where a.city_id<>b.city_id;
+
+
+
+---------------query to get list of persons working under each employee------
+
+--------------query with inline view in the from clause----------------
+select empno,ename,mgr from emp;
+
+
+select mgr,
+       listagg(ename,',') within group(order by ename) emps_list,
+       count(*) emps_cnt
+from emp
+group by mgr
+order by mgr;
+
+
+select empno,
+       ename,
+       a.mgr,
+       nvl(b.emps_list,0) emps_list,
+       nvl(b.emps_cnt,0) emps_cnt
+from emp a left outer join
+         (select mgr,
+          listagg(ename,',') within group(order by ename) emps_list,
+          count(*) emps_cnt
+          from emp
+          group by mgr
+          order by mgr)b
+on a.empno=b.mgr
+order by empno;
+
+--------------query with inline view in the select clause----------------
+
+select empno,ename from emp;
+
+
+select listagg(ename,',') within group(order by ename) emps_list
+from emp
+where mgr=7566;
+
+select empno,ename,(select listagg(ename,',') within group(order by ename) 
+                    from emp
+                    where mgr=e.empno) emps_list,
+                    (select count(*)
+                    from emp
+                    where mgr=e.empno) emps_cnt
+from emp e
+order by empno;
+
+
+--------------self join--------------
+select m.empno,m.ename,
+       listagg(e.ename,',') within group(order by e.ename) emp_list,
+       count(e.ename) emps_cnt
+from emp m left outer join emp e on m.empno=e.mgr
+group by m.empno,m.ename
+order by m.empno;
+-----------------------------end----------------------------------------------
