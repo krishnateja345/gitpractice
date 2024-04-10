@@ -343,7 +343,7 @@ with ds1 as
             (
             select trunc(sysdate,'Month') fdate,
                    last_day(sysdate) ldate,
-                   round(last_day(sysdate)-trunc(sysdate,'Month')) ndays
+                   (last_day(trunc(sysdate))-trunc(sysdate,'Month')) ndays
             from dual
             ),
      ds2 as (select fdate+level-1 tdate,
