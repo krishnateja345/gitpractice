@@ -288,3 +288,107 @@ from emp m left outer join emp e on m.empno=e.mgr
 group by m.empno,m.ename
 order by m.empno;
 -----------------------------end----------------------------------------------
+
+------------------------------------------10-04-2024-----------------------------------------
+
+------------------------ SQL to generate all the date range for the transaction records-------------
+
+
+select * from HR.tran_amount;
+
+
+create table tran_data
+(
+tran_date date,
+tran_desc varchar2(20),
+tran_amount number
+);
+
+
+insert into tran_data values('05-may-24','Bill Payment',1000);
+insert into tran_data values('07-may-24','Deposit',5000);
+insert into tran_data values('09-may-24','Fees Payment',2500);
+insert into tran_data values('12-may-24','Bonus Recevied',3400);
+insert into tran_data values('13-may-24','Bonus Recevied',3400);
+commit;
+
+
+with ds1 as (
+            select min(tran_date) mindate, max(tran_date) maxdate
+            from tran_data
+            ),
+     ds2 as (select trunc(mindate,'MM') sdate,last_day(maxdate) ldate,
+            last_day(maxdate)-trunc(mindate,'MM')+1 ndays
+            from ds1),
+     ds3 as (select sdate+level-1 tdate from ds2
+            connect by level<=ndays)
+select TDATE, TRAN_DESC, nvl(TRAN_AMOUNT,0) TRAN_AMOUNT from ds3 
+left outer join tran_data on tran_data.tran_date=ds3.tdate
+order by ds3.tdate;
+
+select * from tran_data;
+
+-------testing--------------
+insert into tran_data values('23-may-24','UPI Payment',7200);
+
+insert into tran_data values('12-june-24','Rent Payment',12000);
+
+insert into tran_data values('12-jan-24','Fees Payment',10000);
+
+commit;
+
+-------------------------------------SQL to Find number of saturday and sunday----------------------------
+
+with ds1 as
+            (
+            select trunc(sysdate,'Month') fdate,
+                   last_day(sysdate) ldate,
+                   round(last_day(sysdate)-trunc(sysdate,'Month')) ndays
+            from dual
+            ),
+     ds2 as (select fdate+level-1 tdate,
+             trim(to_char(fdate+level-1,'DAY')) D_ay
+             from ds1
+             connect by level<=ndays
+             )
+select d_ay,count(*) cnt from ds2
+where d_ay='SUNDAY' or d_ay='SATURDAY'
+group by d_ay;
+
+
+--------testing the queries with different dates----------------
+with ds1 as
+            (
+            select trunc(to_date('10-05-24'),'Month') fdate,
+                   last_day(to_date('10-05-24')) ldate,
+                   round(last_day(to_date('10-05-24'))-trunc(to_date('10-05-24'),'Month')) ndays
+            from dual
+            ),
+     ds2 as (select fdate+level-1 tdate,
+             trim(to_char(fdate+level-1,'DAY')) D_ay
+             from ds1
+             connect by level<=ndays+1
+             )
+select d_ay,count(*) cnt from ds2
+where d_ay='SUNDAY' or d_ay='SATURDAY'
+group by d_ay;
+
+
+with ds1 as
+            (
+            select trunc(to_date('11-11-24'),'Month') fdate,
+                   last_day(to_date('11-11-24')) ldate,
+                   round(last_day(to_date('11-11-24'))-trunc(to_date('11-11-24'),'Month')) ndays
+            from dual
+            ),
+     ds2 as (select fdate+level-1 tdate,
+             trim(to_char(fdate+level-1,'DAY')) D_ay
+             from ds1
+             connect by level<=ndays+1
+             )
+select d_ay,count(*) cnt from ds2
+where d_ay='SUNDAY' or d_ay='SATURDAY'
+group by d_ay;
+
+
+------------------------end--------------------------------------------------------
