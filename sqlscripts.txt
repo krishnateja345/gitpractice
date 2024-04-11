@@ -392,3 +392,48 @@ group by d_ay;
 
 
 ------------------------end--------------------------------------------------------
+
+
+--------------------------------11-04-2024------------------------------------------
+---------Oracle SQL Practical question with answer Write a SQL to print Cricket Dashboard
+--------performace point of view----------------
+with ds as
+        (
+        select team_a a,team_b b,
+                case when team_a=winner then 1 else 0 end t_a,
+                case when team_b=winner then 1 else 0 end t_b
+        from cricket)
+select teams,
+       count(*) matches_played,
+       sum(teams_cnt) matches_won,
+       count(*)-sum(teams_cnt) matches_lost
+from
+                    (
+                    select --a,b,t_a,t_b ,r,
+                           decode(r,1,a,b) teams,
+                           decode(r,1,t_a,t_b) teams_cnt
+                    from ds,(select rownum r from dual connect by level<=2)
+                    )
+group by teams;
+
+
+--------Oracle SQL Practical question with answer | SQL to find list of DICE rolled combinations
+
+with t as
+        (
+        select level n from dual
+        connect by level<=6
+        )
+select '('||t1.n||','||t2.n||','||t3.n||')' res from t t1,t t2, t t3
+where t3.n=t1.n+t2.n;
+
+
+with t as
+        (
+        select level n from dual
+        connect by level<=6
+        )
+select '('||t1.n||','||t2.n||','||t3.n||')' res from t t1,t t2, t t3
+where t3.n=t1.n+t2.n or t2.n=t1.n+t3.n or t1.n=t2.n+t3.n;
+
+----------------end----------------------------------------------------------------------------------
