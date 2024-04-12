@@ -437,3 +437,60 @@ select '('||t1.n||','||t2.n||','||t3.n||')' res from t t1,t t2, t t3
 where t3.n=t1.n+t2.n or t2.n=t1.n+t3.n or t1.n=t2.n+t3.n;
 
 ----------------end----------------------------------------------------------------------------------
+
+
+---------------------12-04-2024--------------
+
+-------------sort the numbers in the comma separated list--------
+with ds as(  
+           select '3,10,5,1,7,55,75,100,42,12,17' str from dual
+           )
+select --str,
+       listagg(regexp_substr(str,'[^,]+',1,level),',')
+       within group(order by regexp_substr(str,'[^,]+',1,level))  rstr
+from ds
+connect by level<=regexp_count(str,',')+1;
+
+-----converting result string using to_number in order sort the data as it is in
+-----string format
+with ds as(  
+           select '3,10,5,1,7,55,75,100,42,12,17' str from dual
+           )
+select --str,
+       listagg(regexp_substr(str,'[^,]+',1,level),',')
+       within group(order by to_number(regexp_substr(str,'[^,]+',1,level)))  rstr
+from ds
+connect by level<=regexp_count(str,',')+1;
+
+
+with ds as(
+            select 'WELCOME' str
+            from dual
+            ),
+ds2 as (select str,
+       substr(str,level,1) str1
+from ds
+connect by level<=length(str))
+select listagg(str1) within group(order by str1) rstr from ds2;
+
+
+---------Oracle SQL Practical question with answer | Reverse the String without using reverse function
+
+with ds as(
+            select 'WELCOME' str
+            from dual
+            )
+select str,reverse(str) rstr from ds;
+
+
+with ds as(
+            select 'WELCOME' str
+            from dual
+            ),
+ds2 as (select str,level l,
+       substr(str,level,1) str1
+       from ds
+connect by level<=length(str))
+select listagg(str1) within group(order by l desc) rstr from ds2;---reversing the string  by doing order 
+----by level desc
+-----------------end-------------------------------------------------------------------------------------
