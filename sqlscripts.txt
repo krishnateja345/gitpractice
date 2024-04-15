@@ -494,3 +494,76 @@ connect by level<=length(str))
 select listagg(str1) within group(order by l desc) rstr from ds2;---reversing the string  by doing order 
 ----by level desc
 -----------------end-------------------------------------------------------------------------------------
+
+----------------------15-04-2024-------------------------------------------------
+---------------consolidate two rows as a single row--------------------------
+
+with ds as(
+            select empno,ename,
+                   rownum rn,
+                   count(*) over() cnt,
+                   round(count(*) over()/2) cnt1,
+                   (round(count(*) over()/2)-rownum) acnt
+            from emp_a),
+ ds1 as (select * from ds where acnt>=0),
+ ds2 as (select * from ds where acnt<0)
+ select --ds1.empno,
+        ds1.ename,
+        --ds2.empno,
+        ds2.ename from ds1 
+ left outer join ds2 on ds1.acnt=abs(ds2.acnt)
+ order by ds1.empno;
+ 
+ 
+ select * from emp_b;
+ 
+ delete from emp_b;
+ 
+ 
+ insert into emp_b (empno1,ename1,empno2,ename2)
+ with ds as(
+            select empno,ename,
+                   rownum rn,
+                   count(*) over() cnt,
+                   round(count(*) over()/2) cnt1,
+                   (round(count(*) over()/2)-rownum) acnt
+            from emp_a),
+ ds1 as (select * from ds where acnt>=0),
+ ds2 as (select * from ds where acnt<0)
+ select ds1.empno,
+        ds1.ename,
+        ds2.empno,
+        ds2.ename from ds1 
+ left outer join ds2 on ds1.acnt=abs(ds2.acnt)
+ order by ds1.empno;
+ 
+ 
+ select * from emp_b;
+ 
+ 
+ 
+  ------Oracle SQL Practical question with answer Fill the missing dates with last not null value
+
+create table txn_data
+(
+txn_date date,
+txn_amount number
+);
+
+insert into txn_data values('20-jul-24',100);
+insert into txn_data values('25-jul-24',200);
+insert into txn_data values('30-jul-24',300);
+commit;
+
+with ds as(
+            select min(txn_date) mndate,
+                   max(txn_date) mxdate,
+                   max(txn_date)-min(txn_date) ndays
+            from txn_data),
+ds1 as (select mndate+level-1 txn_date from ds connect by level<=ndays+1)
+select ds1.txn_date,--txn_data.txn_amount,
+       decode(txn_amount,null,last_value(txn_data.txn_amount ignore nulls) over(order by ds1.txn_date),
+       txn_data.txn_amount) act_result
+from ds1 left outer join txn_data on ds1.txn_date=txn_data.txn_date
+order by ds1.txn_date;
+-----------------------end----------------------------------------------------------------
