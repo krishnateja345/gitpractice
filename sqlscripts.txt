@@ -613,3 +613,83 @@ select --start_range,end_range,
  
  
  -----------------end---------------------------------
+
+ -----------------17-04-2024-------------------------------------
+ --------Oracle SQL Practical question with answer Grouping The Range Data
+
+create table car_years
+(
+	name varchar2(20),
+    start_year number,
+    end_year number
+    
+);
+
+/*insert into car_years values('Swift',2007,2009);
+insert into car_years values('Swift',2009,2011);
+insert into car_years values('Swift',2011,2013);
+insert into car_years values('Maruthi',2009,2011);
+insert into car_years values('Maruthi',2013,2015);
+commit;*/
+
+select name,min(year) startyear,max(year) endyear --year-rownum 
+    from
+    (
+    select distinct name,--start_year,end_year,
+        --end_year-start_year nyrs,
+        --l,
+        start_year+l-1 year
+        from car_years,lateral(select level l from dual connect by level<=end_year-start_year+1)
+    order by name,year
+    )
+    group by name,year-rownum;
+
+
+    -------------Oracle SQL Practical question with answer / SQL to check whether given sudoku is resolved
+
+
+select  case when sum( distinct rsum)=45 then 'Sudoku is valid' else
+                                              'Sudoku is invalid' end Result
+from
+(select row_no, C1+ C2+ C3+ C4+ C5+ C6+ C7+ C8+ C9 rsum from sudoku
+union all
+select col_name col_no,col_value csum from
+(
+select sum(C1) C1, sum(C2) C2, sum(C3) C3, sum(C4) C4, sum(C5) C5,
+sum(C6) C6, sum(C7) C7, sum(C8) C8, sum(C9) C9
+from sudoku) unpivot(col_value for col_name in (C1,C2,C3,C4,C5,C6,C7,C8,C9))
+union all
+select grp||col_name grp_no,col_value grpsum from 
+(
+select 'G'||ceil(rownum/3) grp,
+        sum(C1+ C2+ C3) G1, sum(C4+ C5+ C6) G2, sum(C7+ C8+ C9) G3
+        from sudoku
+group by ceil(rownum/3)) unpivot(col_value for col_name in(G1,G2,G3))
+);
+-----to list the grpnames colname rowname------------
+select 
+rsum,
+listagg(row_no,',') within group(order by row_no) grp_names,
+case when sum( distinct rsum)=45 then 'Sudoku is valid' else
+                                              'Sudoku is invalid' end Result
+from
+(select row_no, C1+ C2+ C3+ C4+ C5+ C6+ C7+ C8+ C9 rsum from sudoku
+union all
+select col_name col_no,col_value csum from
+(
+select sum(C1) C1, sum(C2) C2, sum(C3) C3, sum(C4) C4, sum(C5) C5,
+sum(C6) C6, sum(C7) C7, sum(C8) C8, sum(C9) C9
+from sudoku) unpivot(col_value for col_name in (C1,C2,C3,C4,C5,C6,C7,C8,C9))
+union all
+select grp||col_name grp_no,col_value grpsum from 
+(
+select 'G'||ceil(rownum/3) grp,
+        sum(C1+ C2+ C3) G1, sum(C4+ C5+ C6) G2, sum(C7+ C8+ C9) G3
+        from sudoku
+group by ceil(rownum/3)) unpivot(col_value for col_name in(G1,G2,G3))
+)
+group by rsum;
+
+-------update sudoku set c3=5 where row_no='R3';
+
+----------------------------------------end--------------------------------
