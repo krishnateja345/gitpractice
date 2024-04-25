@@ -785,3 +785,68 @@ start with mgr is null
 connect by prior empno=mgr)
 where is_leaf=1;
 ---------end--------------------------------
+
+----------------------25-04-2024----------------------
+---Oracle SQL Practical question | SQL to group the employees into multiple team
+---2 members each team
+with ds as 
+        (
+        select ename,city,
+               row_number() over(partition by city order by rownum ) seqno,
+               ceil(row_number() over(partition by city order by rownum ) /2) grpno
+        from emp_city)
+select listagg(ename,',') within group(order by ename) ename_list,
+       city,
+       --grpno,
+       'Team -'||row_number() over(order by city) team_no
+       from ds
+group by city,grpno;
+
+----3 members each team
+
+with ds as 
+        (
+        select ename,city,
+               row_number() over(partition by city order by rownum ) seqno,
+               ceil(row_number() over(partition by city order by rownum ) /3) grpno
+        from emp_city)
+select listagg(ename,',') within group(order by ename) ename_list,
+       city,
+       --grpno,
+       'Team -'||row_number() over(order by city) team_no
+       from ds
+group by city,grpno;
+
+----4 memebers each team
+with ds as 
+        (
+        select ename,city,
+               row_number() over(partition by city order by rownum ) seqno,
+               ceil(row_number() over(partition by city order by rownum ) /4) grpno
+        from emp_city)
+select listagg(ename,',') within group(order by ename) ename_list,
+       city,
+       --grpno,
+       'Team -'||row_number() over(order by city) team_no
+       from ds
+group by city,grpno;
+
+----Oracle SQL Practical question | SQL to Get Last three consecutive status count
+
+with ds as
+            (
+            select id,to_date(rep_month,'Mon-yy') rep_month ,status,
+                   decode(status,'red',0,1) f,
+                   sum(decode(status,'red',0,1)) 
+                   over(partition by id order by to_date(rep_month,'Mon-yy') desc) csum
+            from reports
+            --where id=1
+            )
+select id,--rep_month,status,csum
+       count(*) count
+from ds
+where csum=0
+group by id
+having count(*)>=3;
+
+-----end--------------------------------------------
