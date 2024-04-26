@@ -850,3 +850,68 @@ group by id
 having count(*)>=3;
 
 -----end--------------------------------------------
+
+create table values_date
+(
+dt date,
+val varchar(10)
+);
+
+insert into values_date values('10-jul-20','A');
+insert into values_date values('11-jul-20','A');
+insert into values_date values('12-jul-20','B');
+insert into values_date values('13-jul-20','A');
+insert into values_date values('14-jul-20','A');
+insert into values_date values('15-jul-20','A');
+insert into values_date values('16-jul-20','B');
+insert into values_date values('17-jul-20','B');
+insert into values_date values('18-jul-20','C');
+insert into values_date values('19-jul-20','C');
+insert into values_date values('20-jul-20','A');
+insert into values_date values('21-jul-20','A');
+commit;
+
+with ds as 
+            (
+            select dt,val,
+                  -- nvl(lag(val) over(order by dt),'A') lval,
+                   decode(nvl(lag(val) over(order by dt),'A'),val,0,1) df
+            from values_date
+            ),
+ds2 as (select dt,
+       val,
+       df,
+       sum(df) over(order by dt) csum
+from ds)
+select min(dt) dt,val,count(*) count from ds2
+group by val,csum
+order by 1;
+
+---Oracle SQL Practical question | SQL to fill the missing months with previous months salary
+
+create table empsal
+(
+ename varchar(20),
+mnyr varchar(20),
+salary number
+);
+
+insert into empsal values('Peter','May-19',5000);
+insert into empsal values('Peter','Aug-19',10000);
+insert into empsal values('Peter','Mar-20',15000);
+insert into empsal values('Soloman','Oct-19',20000);
+insert into empsal values('Soloman','Feb-20',30000);
+commit;
+
+with ds as
+    (
+        select ename,to_date(mnyr,'Mon-yy') tdate,salary,
+               lead(to_date(mnyr,'Mon-yy')) over(partition by ename order by ename) ldate,
+               nvl(MONTHS_BETWEEN(lead(to_date(mnyr,'Mon-yy')) over(partition by ename order by ename),
+               to_date(mnyr,'Mon-yy')),1) mdate
+        from empsal
+        order by ename)
+select ename,to_char(add_months(tdate,l),'Mon-yy') tdate,salary --mdate 
+    from ds,lateral(select level-1 l from dual connect by level<=mdate);
+    
+-----end---------------------------------
