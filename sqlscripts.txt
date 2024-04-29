@@ -915,3 +915,97 @@ select ename,to_char(add_months(tdate,l),'Mon-yy') tdate,salary --mdate
     from ds,lateral(select level-1 l from dual connect by level<=mdate);
     
 -----end---------------------------------
+
+----29-04-2024----------------
+------Oracle SQL Practical question | SQL to count number of occurrences of a vowels in a string
+
+create table empnames
+(
+empno number,
+ename varchar(20)
+);
+
+insert into empnames values(1,'Krishna Teja');
+insert into empnames values(2,'Ravi Teja');
+insert into empnames values(3,'Sai Teja');
+insert into empnames values(4,'Sai Dharam Teja');
+insert into empnames values(5,'Varun Teja');
+commit;
+
+select * from empnames;
+
+select empno,ename,
+       regexp_count(upper(ename),'A') A,
+       regexp_count(upper(ename),'E') E,
+       regexp_count(upper(ename),'I') I,
+       regexp_count(upper(ename),'O') O,
+       regexp_count(upper(ename),'U') U
+from empnames;
+
+----Using Without RegEx
+select * from 
+    (
+select empno,ename, 
+    upper(substr(ename,r,1)) estr,
+    --length(ename) l,
+   -- r
+    count(*) cnt
+    from empnames ,lateral(select rownum r from dual connect by level<=length(ename))
+    where upper(substr(ename,r,1)) in ('A','E','I','O','U')
+    group by empno,ename,substr(ename,r,1)
+    order by 1) pivot(max(cnt) for estr in('A','E','I','O','U'))
+order by 1;
+
+-----Using Only Length and Replace Functions
+
+select empno,ename,
+       --length(ename) l,
+       length(ename)-length(replace(Upper(ename),'A')) A,
+       length(ename)-length(replace(Upper(ename),'E')) E,
+       length(ename)-length(replace(Upper(ename),'I')) I,
+       length(ename)-length(replace(Upper(ename),'O')) O,
+       length(ename)-length(replace(Upper(ename),'U')) U
+from empnames;
+
+---Oracle SQL Practical question | SQL to Get all dates for the given input month and year | date range
+
+with ds 
+as
+(
+select to_date('APR2024','Mon-yy') d from dual
+),
+ds1 as (select trunc(d,'MM') fd,
+        --last_day(d) ld,
+        last_day(d)-trunc(d,'MM')+1 nd
+from ds)
+select to_char(fd+level-1,'DD-MM-YYYY') d from ds1
+connect by level<=nd;
+
+--test case for jan2024
+with ds 
+as
+(
+select to_date('JAN2024','Mon-yy') d from dual
+),
+ds1 as (select trunc(d,'MM') fd,
+        --last_day(d) ld,
+        last_day(d)-trunc(d,'MM')+1 nd
+from ds)
+select to_char(fd+level-1,'DD-MM-YYYY') d from ds1
+connect by level<=nd;
+
+--test case for feb2024
+with ds 
+as
+(
+select to_date('FEB2024','Mon-yy') d from dual
+),
+ds1 as (select trunc(d,'MM') fd,
+        --last_day(d) ld,
+        last_day(d)-trunc(d,'MM')+1 nd
+from ds)
+select to_char(fd+level-1,'DD-MM-YYYY') d from ds1
+connect by level<=nd;
+--select trunc(to_date('25-04-24'),'MM') from dual; trunc is used to get first day of the month
+
+---------------end-----------------------------------
