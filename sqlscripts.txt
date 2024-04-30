@@ -1009,3 +1009,113 @@ connect by level<=nd;
 --select trunc(to_date('25-04-24'),'MM') from dual; trunc is used to get first day of the month
 
 ---------------end-----------------------------------
+
+-----30-04-2024---------
+--Oracle SQL Practical question | SQL to convert comma separated string to rows and vice versa
+
+create table empdept
+(
+deptno int,
+ename varchar(50)
+);
+
+    insert into empdept values(10,'Ravi');
+    insert into empdept values(10,'Raghu');
+    insert into empdept values(10,'Raju');
+    insert into empdept values(20,'Mohan');
+    insert into empdept values(20,'Priya');
+    insert into empdept values(30,'Praveen');
+    commit;
+
+select deptno,listagg(ename,',') within group(order by ename) enames 
+from empdept
+group by deptno;
+
+create table empdept1
+as
+select deptno,listagg(ename,',') within group(order by ename) enames 
+from empdept
+group by deptno;
+
+select * from empdept1;
+
+with ds as 
+    (
+    select deptno,ename, 
+    regexp_count(ename,',')+1 cnt
+    from empdept1)
+    select deptno,--ename,
+            regexp_substr(ename,'\w+',1,r) resultstring
+    from ds,lateral(select rownum r from dual connect by level<=cnt);
+    
+    
+select * from v$version;
+
+select * from v$sql --where sql_text --like '%resultstring%'
+--and sql_text not like '%vsql%';
+
+---Oracle SQL Practical question | SQL to compute year end credit card balance
+
+
+
+with ds as 
+(
+select to_char(tran_date,'MON-YY') tmonth,--tran_amt,
+       case when tran_amt>0 then tran_amt end debit,
+       case when tran_amt>0 then count(*) end dcount,
+       case when tran_amt<0 then tran_amt end credit,
+       case when tran_amt<0 then count(*) end ccount
+from TRAN_AMOUNT
+group by to_char(tran_date,'MON-YY'),tran_amt
+order by 
+to_char(tran_date,'MON-YY')),
+ds1 as (select TMONTH, sum(DEBIT) dbamount, sum(DCOUNT) dbcount, sum(CREDIT) cramount, sum(CCOUNT) crcount
+       from ds
+       group by tmonth)
+select TMONTH, DBAMOUNT, --DBCOUNT,
+       CRAMOUNT, CRCOUNT,
+       nvl(case when abs(cramount)<100 or crcount<3 then -5 end,0) fee 
+from ds1;
+
+/*select to_char(to_date(level,'MM'),'MON-YY') tmonth from dual
+connect by level<=12;
+
+select to_char(to_date(level,'MM'),'MON-YY') tmonth from dual
+connect by level<=12;
+
+select to_char(trunc(to_date(level,'MM') - interval '4' year,'YEAR'),'MON-YY') from dual
+connect by level<=12;*/
+
+select 
+  to_char(ADD_MONTHS(to_date(level,'MM'), 12 * 4 * -1),'MON-YY') AS tmonth,
+  0  from dual
+  connect by level<=12;
+  
+-----actual query-----------------
+with ds as 
+(
+select tmonth,--tran_amt,
+       nvl(case when tran_amt>0 then tran_amt end,0) debit,
+       nvl(case when tran_amt>0 then count(*) end,0) dcount,
+       nvl(case when tran_amt<0 then tran_amt end,0) credit,
+       nvl(case when tran_amt<0 then count(*) end,0) ccount
+from (select to_char(tran_date,'MON-YY') tmonth,tran_amt from TRAN_AMOUNT
+      union all
+      select 
+      to_char(ADD_MONTHS(to_date(level,'MM'), 12 * 4 * -1),'MON-YY') AS tmonth,
+      0  from dual
+      connect by level<=12)
+group by tmonth,tran_amt
+order by 
+tmonth),
+ds1 as (select TMONTH, sum(DEBIT) dbamount, sum(DCOUNT) dbcount, sum(CREDIT) cramount, 
+        sum(CCOUNT) crcount
+       from ds
+       group by tmonth),
+ds2 as (select TMONTH, DBAMOUNT, --DBCOUNT,
+       CRAMOUNT, CRCOUNT,
+       nvl(case when abs(cramount)<100 or crcount<3 then -5 end,0) fee 
+       from ds1)
+select sum(dbamount)+sum(cramount)+sum(fee) result from ds2 order by to_date(tmonth,'Mon-yy');
+---------------end-----------------------------
+
