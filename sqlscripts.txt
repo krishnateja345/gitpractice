@@ -1119,3 +1119,52 @@ ds2 as (select TMONTH, DBAMOUNT, --DBCOUNT,
 select sum(dbamount)+sum(cramount)+sum(fee) result from ds2 order by to_date(tmonth,'Mon-yy');
 ---------------end-----------------------------
 
+---01-05-2024-----------
+---Oracle SQL Practical question | SQL to find the set of rows in hierarchical relational data
+
+with ds as (
+            select id from
+            (
+            select id,old_id,
+                   CONNECT_BY_ISLEAF l
+            from ids
+            connect by prior old_id=id
+            start with id=3
+            ) where l=1)
+select id,old_id
+       from ids
+connect by prior id=old_id
+start with id=(select id from ds);
+
+---------------Oracle SQL Practical question | SQL to convert data representation in different format
+with ds as 
+(
+select --PREV_ACTIVATION_DT, PREV_DEACTIVATION_DT, PREV_RATE, 
+       ACTIVATION_DT, DEACTIVATION_DT, RATE, 
+       --NEXT_ACTIVATION_DT, NEXT_DEACTIVATION_DT, NEXT_RATE,
+       case when PREV_ACTIVATION_DT is NULL or ACTIVATION_DT<>PREV_DEACTIVATION_DT+1  then 'Added' 
+            when ACTIVATION_DT=PREV_DEACTIVATION_DT+1 and RATE<>NEXT_RATE then 'Modified'
+            end 
+            changes,
+       case when NEXT_ACTIVATION_DT is null then 'Removed' 
+            when DEACTIVATION_DT+1<>NEXT_ACTIVATION_DT then 'Removed' end  changes1
+       from 
+(
+select ACTIVATION_DT, DEACTIVATION_DT, RATE,
+       lag(ACTIVATION_DT) over(order by ACTIVATION_DT) prev_ACTIVATION_DT,
+       lag(DEACTIVATION_DT) over(order by ACTIVATION_DT) prev_DEACTIVATION_DT,
+       lag(RATE) over(order by ACTIVATION_DT) prev_RATE,
+       Lead(ACTIVATION_DT) over(order by ACTIVATION_DT) next_ACTIVATION_DT,
+       Lead(DEACTIVATION_DT) over(order by ACTIVATION_DT) next_DEACTIVATION_DT,
+       Lead(RATE) over(order by ACTIVATION_DT) next_RATE
+from tax_rate))
+select --ACTIVATION_DT, DEACTIVATION_DT, RATE, CHANGES, CHANGES1,l,
+       decode(l,1,ACTIVATION_DT,DEACTIVATION_DT) dt,
+       RATE,
+       decode(l,1,CHANGES,CHANGES1) changes
+from ds,(select level l from dual connect by level<=2)
+where decode(l,1,CHANGES,CHANGES1) is not null
+order by ACTIVATION_DT,l
+;
+
+----end-------------------------------
