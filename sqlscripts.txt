@@ -1168,3 +1168,49 @@ order by ACTIVATION_DT,l
 ;
 
 ----end-------------------------------
+-------03-05-2024--------------------------
+--Oracle SQL Practical question | SQL to convert data representation in different format | METHOD2
+
+with ds as (
+        select  
+                case when p.ACTIVATION_DT is null then 'Added' 
+                     when p.RATE<>c.RATE then 'Modified'
+                end Change1,
+                --p.ACTIVATION_DT, p.DEACTIVATION_DT, p.RATE ,
+                c.ACTIVATION_DT, c.DEACTIVATION_DT, c.RATE ,
+                --n.ACTIVATION_DT, n.DEACTIVATION_DT, n.RATE ,
+                case when n.ACTIVATION_DT is null then 'Removed'
+                end Change2
+        from tax_rate c
+        left outer join tax_rate p on c.activation_dt=p.deactivation_dt+1
+        left outer join tax_rate n on n.activation_dt=c.deactivation_dt+1
+        order by c.activation_dt)
+select * from (
+        select ACTIVATION_DT,rate,change1 changes from ds
+        union 
+        select DEACTIVATION_DT,rate,change2 from ds
+        ) where changes is not null;
+        
+---Oracle SQL Practical question | Oracle SQL to check whether two strings are anagram of each other
+
+with ds as
+    (
+    select sno,s1,s2,
+    --greatest(length(s1),length(s2)) ln
+    --l,
+    substr(s1,l,1) str1,
+    substr(s2,l,1) str2
+    from anagram ,lateral(select level l from dual connect by level<=greatest(length(s1),length(s2)))
+    ), 
+ds1 as 
+    (select sno,s1,s2,
+    listagg(str1) within group(order by str1) sr1,
+    listagg(str2) within group(order by str2) sr2
+    from ds
+    group by sno,s1,s2
+    )
+select sno,s1,s2,
+    decode(sr1,sr2,'YES','NO') is_anagram
+    from ds1;
+    
+--------------------end---------------------------
