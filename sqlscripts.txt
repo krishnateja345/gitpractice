@@ -1214,3 +1214,180 @@ select sno,s1,s2,
     from ds1;
     
 --------------------end---------------------------
+
+----05-05-2024----
+--Oracle SQL Practical question | Oracle SQL to divide the rows into groups of data | NTILE function
+
+with ds as
+        (
+        select sno,sname,
+        ntile(3) over(order by sno) grp
+        from stud
+        )
+select grp,null sno,null sname,min(sno) minsno,max(sno) maxsno from ds
+group by grp
+union all
+select grp,sno,sname,null minsno,null maxsno from ds
+order by grp,sno;
+
+----nulls first----
+with ds as
+        (
+        select sno,sname,
+        ntile(3) over(order by sno) grp
+        from stud
+        )
+select grp,null sno,null sname,min(sno) minsno,max(sno) maxsno from ds
+group by grp
+union all
+select grp,sno,sname,null minsno,null maxsno from ds
+order by grp,sno nulls first;
+
+--Oracle SQL Practical question | Oracle SQL to find total time and work time and break time
+
+create table emp_logins
+(
+ename varchar2(50),
+punch_desc varchar2(100),
+punch_time date
+)
+
+insert into emp_logins values('Ravi','Punch In',to_date('01/sep/2021 10:00:00 AM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Ravi','Punch Out',to_date('01/sep/2021 12:30:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Ravi','Punch In',to_date('01/sep/2021 1:30:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Ravi','Punch Out',to_date('01/sep/2021 4:30:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Ravi','Punch In',to_date('01/sep/2021 5:30:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Ravi','Punch Out',to_date('01/sep/2021 6:00:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch In',to_date('01/sep/2021 9:00:00 AM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch Out',to_date('01/sep/2021 11:30:00 AM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch In',to_date('01/sep/2021 11:45:00 AM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch Out',to_date('01/sep/2021 12:30:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch In',to_date('01/sep/2021 1:15:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch Out',to_date('01/sep/2021 4:00:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch In',to_date('01/sep/2021 4:15:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+insert into emp_logins values('Kavin','Punch Out',to_date('01/sep/2021 6:30:00 PM','DD/MON/YYYY HH:MI:SS AM'));
+commit;
+
+select * from emp_logins;
+
+alter session set nls_date_format='DD/MON/YYYY HH:MI:SS AM';
+
+with ds as 
+            (
+            select ENAME, 
+                   lag(PUNCH_DESC,1) over(partition by  ENAME order by PUNCH_TIME) p_d,
+                   lag(PUNCH_TIME,1) over(partition by  ENAME order by PUNCH_TIME) p_t,
+                   PUNCH_DESC, PUNCH_TIME
+            from emp_logins
+            ),
+ ds1 as (            
+            select ENAME, P_D, P_T, PUNCH_DESC, PUNCH_TIME,
+                   nvl(round((case when P_D='Punch In' then PUNCH_TIME-P_T end)*24,2),0) work_time,
+                   nvl(round((case when P_D='Punch Out' then PUNCH_TIME-P_T end)*24,2),0) break_time
+            from ds
+            )
+select ename, sum(work_time)+sum(break_time) total_time,
+              sum(work_time) work_time,
+              sum(break_time) break_time from ds1
+group by ename;
+------------end-------------------------
+
+---06-05-2024----
+--Oracle SQL Practical question | Oracle SQL to compute group number for repeating number
+
+create table col_data
+as
+select * from HR.col_test;
+
+with t1 as
+            (
+            select c1,c2,
+                   nvl(lag(c2,1) over(order by c1),0) lc2
+            from col_data
+            ),
+t2 as 
+            (select c1,c2,lc2, 
+                   decode(c2,lc2,0,1) dc2
+            from t1
+            )
+select C1, C2, --LC2, DC2,
+       sum(dc2) over(order by c1) grp
+from t2;
+
+
+---Oracle SQL Practical question | Oracle SQL to compute count of group of repeating values
+
+create table col_values
+(
+dt date,
+cd varchar(10)
+);
+
+insert into col_values values('09-oct-2021','A');
+insert into col_values values('10-oct-2021','A');
+insert into col_values values('11-oct-2021','A');
+insert into col_values values('12-oct-2021','A');
+insert into col_values values('13-oct-2021','B');
+insert into col_values values('14-oct-2021','C');
+insert into col_values values('15-oct-2021','C');
+insert into col_values values('16-oct-2021','C');
+insert into col_values values('17-oct-2021','A');
+insert into col_values values('18-oct-2021','A');
+insert into col_values values('19-oct-2021','A');
+insert into col_values values('20-oct-2021','C');
+insert into col_values values('21-oct-2021','C');
+insert into col_values values('22-oct-2021','A');
+commit;
+
+--------to get all groups count like A's,B's,C's
+with t1 as 
+            (
+            select dt,cd,
+                   row_number() over(order by dt) rno1,
+                   row_number() over(partition by cd order by dt) rno2,
+                   row_number() over(order by dt)-row_number() over(partition by cd order by dt) rno
+            from col_values
+            ),
+t2 as      (select distinct cd,rno from t1
+            )
+select cd,count(*) grp_count from t2
+group by cd;
+
+----to get all individual counts like A's,B's,C's
+with t1 as 
+            (
+            select dt,cd,
+                   row_number() over(order by dt) rno1,
+                   row_number() over(partition by cd order by dt) rno2,
+                   row_number() over(order by dt)-row_number() over(partition by cd order by dt) rno
+            from col_values
+            ),
+t2 as      (select  cd,rno from t1----just removed distinct to get individual counts
+            )
+select cd,count(*) grp_count from t2
+group by cd;
+
+---------Group and Individual counts together in the output
+with t1 as 
+            (
+            select dt,cd,
+                   row_number() over(order by dt) rno1,
+                   row_number() over(partition by cd order by dt) rno2,
+                   row_number() over(order by dt)-row_number() over(partition by cd order by dt) rno
+            from col_values
+            ),
+t2 as      (select distinct cd,rno from t1
+            ),
+t3 as      (select cd,count(*) grp_count from t2
+            group by cd),
+t4 as      (select cd,rno from t1),
+t5 as      (select cd,count(*) grp_count from t4
+            group by cd)
+select t3.cd,
+       t3.grp_count group_count,
+       t5.grp_count individual_count
+from t3,t5 where t3.cd=t5.cd;
+
+---------------------------end----------------------------------------
+
+
