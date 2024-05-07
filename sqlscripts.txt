@@ -1391,3 +1391,64 @@ from t3,t5 where t3.cd=t5.cd;
 ---------------------------end----------------------------------------
 
 
+---07-05-2024---
+----oracle sql to concatenate previous row value continously
+create table col_test
+as
+select * from HR.col_test2;
+
+with t1 as
+        (
+        select col1,col2,
+               listagg(col2,',') within group(order by col2) over(partition by col1) agg,
+               row_number() over(partition by col1 order by col2) occ
+        from col_test
+        )
+select COL1, COL2, --AGG, occ,
+       --instr(agg||',',',',1,occ),
+       substr(agg,1,instr(agg||',',',',1,occ)-1) result
+from t1;
+
+----Oracle SQL Practical question | Oracle SQL to Find missing number in given range of values
+create table serial1
+(
+    name varchar2(30),
+    s_start int,
+    s_end int
+);
+
+insert into serial1 values('Serial_1',1,10);
+insert into serial1 values('Serial_2',15,20);
+commit;
+
+create table serial2
+(
+    name varchar2(30),
+    s_val int
+);
+
+insert into serial2 values('Serial_1',1);
+insert into serial2 values('Serial_1',2);
+insert into serial2 values('Serial_1',3);
+insert into serial2 values('Serial_1',6);
+insert into serial2 values('Serial_1',8);
+insert into serial2 values('Serial_1',10);
+insert into serial2 values('Serial_2',16);
+insert into serial2 values('Serial_2',17);
+commit;
+
+select * from serial1;
+
+select * from serial2;
+
+select name,
+    --s_start,
+    --s_end,
+    --l-1,
+    s_start+l-1 str from serial1
+    ,lateral(select level l from dual connect by level<=s_end-s_start+1)
+minus
+select * from serial2;
+
+
+--------------------end--------------------------------
