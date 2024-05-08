@@ -1452,3 +1452,44 @@ select * from serial2;
 
 
 --------------------end--------------------------------
+
+---08-05-2024----
+---Oracle SQL Practical question | Oracle SQL to Compute values based on previous rows
+
+drop table iddtval;
+
+create table iddtval
+(
+id varchar(10),
+dt varchar(20),
+val int
+);
+
+insert into iddtval values('A','Jan-23',100);
+insert into iddtval values('A','Feb-23',60);
+insert into iddtval values('A','Mar-23',40);
+insert into iddtval values('B','Jan-23',30);
+insert into iddtval values('B','Feb-23',20);
+commit;
+
+select id,dt,--val,
+--to_date(dt,'Mon-yy') tdt,
+--row_number() over(partition by ID order by to_date(dt,'Mon-yy')) rn,
+--sum(val) over( partition by ID order by to_date(dt,'Mon-yy')) csum,
+round(sum(val) over( partition by ID order by to_date(dt,'Mon-yy'))/
+row_number() over(partition by ID order by to_date(dt,'Mon-yy'))) res
+from iddtval;
+
+--Oracle SQL Practical question | Oracle SQL to print the all possible combination of numbers
+
+with t as
+(
+select level l from dual
+connect by level<=4
+)
+select listagg('['||t1.l ||','||t2.l ||']',',') 
+       within group(order by t1.l||t2.l)
+res from t t1,t t2
+where t1.l<t2.l;
+
+----end of all sessions-----------------------------
