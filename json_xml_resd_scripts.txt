@@ -1,0 +1,83 @@
+create table emp_json
+(
+emp_id int not null,
+data jsonb
+);
+
+insert into emp_json values(1,'{"ename":"Teja","hobbies":["Music","WebSeries","Football"]}');
+
+select * from emp_json;
+
+insert into emp_json values(2,'{"ename":"Krishna","hobbies":["Movies","Football","Gaming"]}');
+
+select * from emp_json;
+
+insert into emp_json values(3,'{"ename":"RamKrishna","hobbies":["Music","Football","WebSeries"]}');
+
+
+select emp_id,data->'ename' ename from emp_json;
+
+select emp_id,data->'ename' ename,data->'hobbies' hobbies from emp_json;
+
+-----queries to get list of data into tabular data
+select emp_id,data->'ename' ename,jsonb_array_elements_text(data->'hobbies') hobbies from emp_json;
+
+
+select distinct data->'ename' ename,jsonb_array_elements_text(data->'hobbies') hobbies from emp_json;
+
+select distinct jsonb_array_elements_text(data->'hobbies') hobbies from emp_json;
+
+----queries to use where clause for the list of data
+select emp_id ,data from emp_json;
+
+select emp_id ,data from emp_json where data->'hobbies'@>'["Movies"]'::jsonb;
+
+select emp_id ,data from emp_json where data->'hobbies'@>'["Music"]'::jsonb;
+
+select emp_id ,data from emp_json where data->'hobbies'@>'["Football"]'::jsonb;
+
+----creating xmldata table
+drop table xml_data;
+
+create table xml_data
+(
+id serial primary key,
+xml_content xml
+);
+
+select * from xml_data;
+
+insert into xml_data(xml_content) values
+('<bookstore>
+ <book category="cooking">
+ <title  lang="en">Everyday Italian</title>
+ <author>Teja</author>
+ <year>2013</year>
+ <price>30.00</price>
+ </book>
+ <book category="children">
+ <title  lang="en">Harry Potter</title>
+ <author>Krishna</author>
+ <year>2019</year>
+ <price>25.00</price>
+ </book>
+ </bookstore>');
+ 
+ 
+ select * from xml_data;
+ 
+ --how to read xml data
+ select xpath('/bookstore/book/title/text()',xml_content) as titles,
+        xpath('/bookstore/book/author/text()',xml_content) as author,
+		xpath('/bookstore/book/year/text()',xml_content) as year
+ from xml_data;
+
+
+-- Retrieve titles and authors of books published after 2013
+ select xpath('/bookstore/book[year>2013]/title/text()',xml_content) as titles,
+        xpath('/bookstore/book[year>2013]/author/text()',xml_content) as author,
+		xpath('/bookstore/book[year>2013]/year/text()',xml_content) as year
+ from xml_data;
+
+
+
