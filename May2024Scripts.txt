@@ -1,0 +1,73 @@
+---------------24-05-2024---------------------------------
+select * from v$version;
+
+select * from v$sql;
+
+select * from all_tables where owner='SYSTEM' and tablespace_name='SYSTEM';
+
+--Problem#1
+--Query to get the result which contains 'A' in any of the columns
+--You should not use OR Keyword
+select * from pract_01;
+
+select * from pract_01 where 'A' in(col1,col2,col3,col4,col5);
+
+select * from pract_01 where col1='A'
+union 
+select * from pract_01 where col2='A'
+union
+select * from pract_01 where col3='A'
+union 
+select * from pract_01 where col4='A'
+union
+select * from pract_01 where col5='A';
+
+select * from pract_01 where col1||col2||col3||col4||col5 like '%A%';
+
+select * from pract_01 where instr(col1||col2||col3||col4||col5 ,'A')>0;
+
+
+--Problem#2
+--Query to select the employees list who are getting more than average salary
+--of the department that are working in
+select * from emp;
+---Using INLINE VIEW
+select empno,ename,a.deptno,sal--,b.avgsal 
+from emp a,(select deptno,round(avg(sal)) avgsal from emp
+            group by deptno) b
+where a.sal>b.avgsal and a.deptno=b.deptno;
+
+--Using CORELATED VIEW
+select empno,ename,a.deptno,sal from 
+emp a where a.sal>(select avg(sal) from emp b 
+                   where b.deptno=a.deptno
+                   );
+                   
+--Using Analytical Function
+select EMPNO, ENAME, DEPTNO, SAL from 
+(
+select empno,ename,deptno,sal,
+       trunc(avg(sal) over(partition by deptno)) avgsal
+from emp)
+where sal>avgsal;
+
+--Using Function
+create or replace function get_avg_sal(in_deptno number)
+return number
+as
+v_avg_sal number;
+begin
+select trunc(avg(sal)) into v_avg_sal from emp
+where deptno=in_deptno;
+return v_avg_sal;
+end;
+
+select get_avg_sal(10) from dual;
+
+select empno,ename,deptno,sal from emp
+where sal>get_avg_sal(deptno);
+                   
+----end-----------------------------------------------------------
+
+
+
