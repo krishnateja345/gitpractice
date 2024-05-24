@@ -1,0 +1,107 @@
+----implicit cursors queries---
+select * from emp;
+
+create table emp_dummy
+as
+select * from emp;
+
+
+select * from emp_dummy;
+
+set serveroutput on;
+
+DECLARE  
+   total_rows number(2); 
+BEGIN 
+   UPDATE emp_dummy 
+   SET sal = sal + 500 where deptno=40; 
+   IF sql%notfound THEN 
+      dbms_output.put_line('no employees data updated'); 
+   ELSIF sql%found THEN 
+      total_rows := sql%rowcount;
+      dbms_output.put_line( total_rows || ' employees data updated '); 
+   END IF;  
+END; 
+/ 
+
+
+declare
+total_rows number(2);
+begin
+update emp_dummy set sal=sal+500
+where deptno=20;
+if sql%notfound then
+dbms_output.put_line('No Employees Data Updated');
+elsif sql%found then 
+total_rows:=sql%rowcount;
+dbms_output.put_line(total_rows||' Employees Data Updated');
+end if ;
+end;
+/
+
+select * from emp_dummy;
+
+--explicit cursor with example
+declare
+v_empid emp_dummy.empno%type;
+v_empname emp_dummy.ename%type;
+v_sal emp_dummy.sal%type;
+v_deptno emp_dummy.deptno%type;
+
+cursor c_emp is select empno,ename,sal,deptno from emp_dummy;
+
+begin
+open c_emp;
+loop
+fetch c_emp into v_empid,v_empname,v_sal,v_deptno;
+exit when c_emp%notfound;
+dbms_output.put_line('employee id is '|| v_empid||' and employee name is '||v_empname||' and his 
+                     salary is '||v_sal||' with deptno '||v_deptno);
+end loop;
+close c_emp;
+end;
+/
+-------------------------end of implicit cursor queries-----------------------------------
+
+------------Procedure syntax in postgresql------------------------
+
+create or replace procedure sample(in_param1 <datatype>,in_param2 <datatype>)
+language plpgsql
+as $procedure$
+declare
+v_max_date date;
+v_max_load_date date;
+v_sql_state varchar;
+v_message varchar;
+v_detail varchar;
+v_hint varchar;
+v_context varchar;
+begin
+insert into <table>(col1,col2,col3,.....coln)
+select col1,
+       col2,
+	   col3,
+	   .
+	   .
+	   .
+	   .
+	   coln 
+from <table> where col1=in_param1 and col2=in_param2;
+
+update sync_proc_control set max_loaded_date=v_max_load_date where name='sample';
+
+exception 
+when others then
+get stacked diagnostics
+v_context:=pg_exception_context;
+v_detail:=pg_exception_detail;
+v_hint:=pg_exception_hint;
+v_message:=message_text;
+v_sql_state:=returned_sqlstate;
+ 
+insert into except_hanle_table(added_on,context,detail,hint,message,sqlstate)
+values(now(),v_context,v_detail,v_hint,v_message,v_sql_state);
+commit;
+end; $procedure$;
+
+--------------end of postgresql proc syntax-----------------------------
