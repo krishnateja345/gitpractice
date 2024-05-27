@@ -69,5 +69,79 @@ where sal>get_avg_sal(deptno);
                    
 ----end-----------------------------------------------------------
 
+-----------------27-05-2024 Script to find the records from tab1 which are not in tab2----
+--using NOT IN
+select * from tab1 where c1 not in (select * from tab2);
 
+--using NOT EXISTS
+select * from tab1 where not exists(select * from tab2 where tab2.c1=tab1.c1);
+
+--using MINUS
+select * from tab1
+minus
+select * from tab2;
+
+--using LEFT OUTER JOIN
+select tab1.c1 from tab1 left outer join tab2 on tab2.c1 = tab1.c1
+where tab2.c1 is null;
+
+--using OTHER POSSIBILITIES
+select * from tab1 where 1>(select count(*) from tab2 where tab1.c1=tab2.c1);
+
+select * from tab1 where (select count(*) from tab2 where tab1.c1=tab2.c1)<1;
+
+---------------Script to generate Cricket Dashboard--------
+
+with t1 as (select  team_name,count(*) matches_played from (
+            select team_a team_name from cricket
+            union all
+            select team_b from cricket)
+            group by team_name),
+     t2 as (
+            select winner,count(*) matches_won from cricket
+            group by winner
+            )
+select TEAM_NAME, 
+       MATCHES_PLAYED, 
+       nvl(MATCHES_WON,0) MATCHES_WON ,
+       MATCHES_PLAYED-nvl(MATCHES_WON,0) MATHCES_LOST
+from t1 left outer join t2 on t1.team_name=t2.winner;
+
+select winner,count(*) matches_won from cricket
+group by winner;
+
+-----Function to generate Cricket Board
+create or replace function matches_played(in_team_name varchar)
+return number
+as
+v_matches_played number;
+begin
+            select count(*) into v_matches_played from cricket
+            where team_a=in_team_name or team_b=in_team_name;
+return v_matches_played;
+end matches_played;
+/
+
+create or replace function matches_won(in_winner varchar)
+return number
+as
+v_matches_won number;
+begin
+            select count(*) into v_matches_won from cricket
+            where winner=in_winner;
+return v_matches_won;
+end matches_won;
+/
+
+select team_name,
+       matches_played(team_name) matches_played,
+       matches_won(team_name) matches_won,
+       matches_played(team_name)-matches_won(team_name) matches_lost
+from
+(
+select team_a team_name from cricket
+union
+select team_b from cricket);
+
+----------------end  27-05-2024-------------------------------------------------
 
