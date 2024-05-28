@@ -145,3 +145,45 @@ select team_b from cricket);
 
 ----------------end  27-05-2024-------------------------------------------------
 
+-----28-05-2024  Oracle sql practice exercise with solution | SQL query to print sequence of numbers
+
+select rownum,e.* from emp e;
+
+select rownum rn from dual
+connect by level<=10;
+
+select level l from dual
+connect by level<=10;
+
+
+with t1(id) as
+(select 1 id from dual
+union all
+select id+1 from t1 where id<10
+)
+select id from t1;
+
+select rownum sno from
+(select 1 from dual
+group by cube(1,2,3,4))
+where rownum<=10;
+
+select rownum sno from xmltable(' 1 to 10 ');
+
+----Oracle sql practice exercise with solution | SQL query to print string in row of characters |PYRAMID
+
+with ds as
+(select 'WELCOME' str from dual)
+select level l,
+       str,
+       substr(str,level,1) a,
+       substr(str,level*-1,1) b,
+       substr(str,1,level) c,
+       substr(str,level) d ,
+       rpad(' ',level,' ')||substr(str,level) e,
+       rpad(' ',length(str)+1-level,' ')||substr(str,1,level) f
+from ds
+connect by level<=length(str);
+
+------------------end 28-05-2024----------------------
+
