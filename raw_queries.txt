@@ -63,6 +63,40 @@ end;
 /
 -------------------------end of implicit cursor queries-----------------------------------
 
+---Finding Duplicate records in a table
+select * from dummy;
+
+select job,deptno,count(*)
+from dummy
+group by job,deptno
+having count(*)>1;
+
+---Deleting Duplicate records
+delete from dummy where rowid 
+not in(select min(rowid) from dummy group by job,deptno);
+
+select * from dummy;
+
+----QUERY TO FIND AN EMPLOYEES CORRESPONDING MANAGERS
+--Self Join
+select a.empno,a.ename,b.ename manager from emp a left outer join emp b
+on a.mgr=b.empno;
+
+select empno,ename,
+(select ename from emp b where a.mgr=b.empno) manager
+from emp a;
+---- query to find nth highest salary
+select empno,ename,sal
+from
+(
+select empno,ename,sal, 
+       row_number() over(order by sal desc) rn,
+       rank() over(order by sal desc) rk,
+       dense_rank() over(order by sal desc) drk
+from emp)
+where drk=2;
+-----------------------------end--------------------------------------
+
 ------------Procedure syntax in postgresql------------------------
 
 create or replace procedure sample(in_param1 <datatype>,in_param2 <datatype>)
