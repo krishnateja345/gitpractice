@@ -187,3 +187,55 @@ connect by level<=length(str);
 
 ------------------end 28-05-2024----------------------
 
+---------29-05-2024  Oracle SQL Practical question with answer extract names from fixed format mail id using SQL function
+
+with t1 as 
+        (
+        select mail_name m from mail_det
+        --where rownum=1
+        ),
+t2 as (select m,
+       instr(m,'.',1,1) fdot,
+       instr(m,'.',1,2) sdot,
+       instr(m,'@',1,1) tdot
+from t1)
+select M, 
+       --FDOT, SDOT, TDOT, 
+       substr(m,1,tdot-1) uname,
+       substr(m,1,fdot-1) firstname,
+       substr(m,fdot+1,sdot-fdot-1) middlename,
+       substr(m,sdot+1,tdot-sdot-1) lastname,
+       substr(m,tdot+1) domainname
+from t2;
+
+--------- Oracle SQL Practical question with answer extract names from different format mail id using SQL function
+with t1 as
+(
+select mail_name m,
+       substr(mail_name,1,instr(mail_name,'@')-1) n,
+       substr(mail_name,instr(mail_name,'@')+1) d
+from mail_det1
+),
+t2 as(select m,n,d,
+       instr(n,'.',1,1) fdot,
+       instr(n,'.',1,2) sdot
+from t1)
+select M, N,  --FDOT, SDOT,
+       substr(n,1,decode(fdot,0,length(n),fdot-1)) first_name,
+       decode(sdot,0,null,substr(n,fdot+1,sdot-fdot-1)) middle_name,
+       decode(fdot+sdot,0,null,decode(sdot,0,substr(n,fdot+1),substr(n,sdot+1)))
+       last_name,
+       d domain_name
+from t2;
+
+---test cases
+select * from mail_det1;
+
+insert into mail_det1 values('tejeshwar@gmail.com');
+commit;
+
+insert into mail_det1 values('ravi.krishna@gmail.com');
+insert into mail_det1 values('prabhu.deva.123@gmail.com');
+commit;
+
+-------------end 29-05-2024-----------------------------
