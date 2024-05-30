@@ -239,3 +239,79 @@ insert into mail_det1 values('prabhu.deva.123@gmail.com');
 commit;
 
 -------------end 29-05-2024-----------------------------
+
+----------30-05-2024  Oracle SQL Practical question with answer calculate the group salary
+select empno,ename,mgr,sal from emp;
+
+select sum(sal) grp_sal
+from emp
+start with ename='JONES'
+connect by prior empno=mgr;
+
+select empno,ename,mgr,sal,
+(select sum(sal) 
+from emp b
+start with b.ename=a.ename
+connect by prior empno=mgr) grp_sal
+from emp a;
+
+----Oracle SQL Practical question with answer Compute Student Result Dashboard
+--Year on X-axis and Dept on Y-axis
+with t1 as 
+        (select dept,year,count(*) n,
+        'P= '||count(case when result='P' then result end) ||',F= '||
+       count(case when result='F' then result end) P_F_Count
+        from students
+        group by dept,year
+        order by year)       
+select dept,
+       max(case when year=1 then p_f_count end) I_Year,
+       max(case when year=2 then p_f_count end) II_Year,
+       max(case when year=3 then p_f_count end) III_Year,
+       max(case when year=4 then p_f_count end) IV_Year      
+       from t1
+group by dept;
+
+--Dept on X-axis and Year on Y-axis
+with t1 as 
+        (select dept,year,count(*) n,
+        'P= '||count(case when result='P' then result end) ||',F= '||
+       count(case when result='F' then result end) P_F_Count
+        from students
+        group by dept,year
+        order by year)       
+select year,
+       max(case when dept='EEE' then p_f_count end) EEE,
+       max(case when dept='CSE' then p_f_count end) CSE,
+       max(case when dept='CVE' then p_f_count end) CVE,
+       max(case when dept='MECH' then p_f_count end) MECH,
+       max(case when dept='ECE' then p_f_count end) ECE
+       from t1
+group by year;
+
+
+-----using pivot--------------------
+--Year on X-axis and Dept on Y-axis
+select * from
+(select dept,year,
+        'P= '||count(case when result='P' then result end) ||',F= '||
+       count(case when result='F' then result end) P_F_Count
+        from students
+        group by dept,year
+        order by year)
+pivot(max(P_F_Count) for year in(1,2,3,4));
+
+--Dept on X-axis and Year on Y-axis
+select * from
+(select dept,year,
+        'P= '||count(case when result='P' then result end) ||',F= '||
+       count(case when result='F' then result end) P_F_Count
+        from students
+        group by dept,year
+        order by year)
+pivot(max(P_F_Count) for dept in('EEE','CSE','CVE','MECH','ECE'));
+        
+
+
+-----end 30-05-2024-----------------
+
