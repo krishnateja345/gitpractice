@@ -315,3 +315,21 @@ pivot(max(P_F_Count) for dept in('EEE','CSE','CVE','MECH','ECE'));
 
 -----end 30-05-2024-----------------
 
+---------------31-05-2024 Oracle SQL Practical question with answer Compute all the possible paths | Oracle SELF JOIN Example
+--First Method
+select --a.city_id,
+       a.city_name city1,
+       --b.city_id,
+       b.city_name city2
+from cities a,cities b
+where a.city_id<b.city_id;
+
+--Second Method
+select distinct
+       greatest(a.city_name,b.city_name) city1,
+       least(a.city_name,b.city_name) cityb
+       --a.city_name,
+       --b.city_name
+from cities a,cities b
+where a.city_name<>b.city_name;
+
