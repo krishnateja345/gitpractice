@@ -333,3 +333,134 @@ select distinct
 from cities a,cities b
 where a.city_name<>b.city_name;
 
+---------------query to get list of persons working under each employee------
+
+--------------query with inline view in the from clause----------------
+select empno,ename,mgr from emp;
+
+
+select mgr,
+       listagg(ename,',') within group(order by ename) emps_list,
+       count(*) emps_cnt
+from emp
+group by mgr
+order by mgr;
+
+
+select empno,
+       ename,
+       a.mgr,
+       nvl(b.emps_list,0) emps_list,
+       nvl(b.emps_cnt,0) emps_cnt
+from emp a left outer join
+         (select mgr,
+          listagg(ename,',') within group(order by ename) emps_list,
+          count(*) emps_cnt
+          from emp
+          group by mgr
+          order by mgr)b
+on a.empno=b.mgr
+order by empno;
+
+--------------query with inline view in the select clause----------------
+
+select empno,ename from emp;
+
+
+select listagg(ename,',') within group(order by ename) emps_list
+from emp
+where mgr=7566;
+
+select empno,ename,(select listagg(ename,',') within group(order by ename) 
+                    from emp
+                    where mgr=e.empno) emps_list,
+                    (select count(*)
+                    from emp
+                    where mgr=e.empno) emps_cnt
+from emp e
+order by empno;
+
+
+--------------self join--------------
+select m.empno,m.ename,
+       listagg(e.ename,',') within group(order by e.ename) emp_list,
+       count(e.ename) emps_cnt
+from emp m left outer join emp e on m.empno=e.mgr
+group by m.empno,m.ename
+order by m.empno;
+-----------------------------end  31-05-2024----------------------------------------------
+
+
+----01-06-2024  Oracle SQL Practical question Write a sql to replace the comma separated value
+
+create table service (service_code varchar(2),service_name varchar(20));
+
+select * from service;
+
+insert into service values('A','Service-A');
+insert into service values('B','Service-B');
+insert into service values('C','Service-C');
+insert into service values('D','Service-D');
+commit;
+
+select * from service;
+
+create table prod_service(prod_code varchar(2),prod_desc varchar(30),service_order varchar(50));
+
+select * from prod_service;
+
+
+insert into prod_service values('P1','Prod_P1','A,C');
+insert into prod_service values('P2','Prod_P2','C,B,D');
+insert into prod_service values('P3','Prod_P3','D,A,C,B');
+insert into prod_service values('P4','Prod_P4','A,B,C,D');
+insert into prod_service values('P5','Prod_P5','D,C,B,A,B');
+commit;
+
+
+select * from prod_service;
+
+select prod_code,prod_desc,service_order,--l,
+    --regexp_substr(service_order,'(.*?,){'||(l-1)||'}([^,]*)',1,1,'',2) r_service_code,
+    listagg(service.service_name,',') within group(order by l) service_names
+    from prod_service,service,
+    lateral(select level l from dual connect by level<=regexp_count(service_order,',')+1)
+    where service.service_code=regexp_substr(service_order,'(.*?,){'||(l-1)||'}([^,]*)',1,1,'',2)
+    group by prod_code,prod_desc,service_order
+    order by prod_code;
+
+
+----query to generate all date ranges for the transactionrecords
+select * from daily_trans;
+
+with t1 as
+        (
+        select trunc(min(tran_date),'MM') tdate, 
+        last_day(max(tran_date)) mdate,
+        last_day(max(tran_date))-trunc(min(tran_date),'MM')+1 n
+        from daily_trans
+        ),
+t2 as
+        (select tdate+level-1 tran_date from t1
+        connect by level<=n)
+select t2.tran_date,t1.tran_desc,nvl(tran_amount,0) tran_amount
+from t2  left outer join daily_trans t1 on t1.tran_date=t2.tran_date
+order by t2.tran_date;
+
+--test cases
+insert into daily_trans values('01-03-2019','Fee Received',7500);
+
+insert into daily_trans values('21-08-2019','Fee Received',5500);
+
+--------------end 01-06-2024-------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
