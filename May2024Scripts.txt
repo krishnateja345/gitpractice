@@ -455,6 +455,48 @@ insert into daily_trans values('21-08-2019','Fee Received',5500);
 --------------end 01-06-2024-------------------------------------------
 
 
+----03-06-2024  Oracle SQL Practical question SQL to Find number of saturday and sunday
+
+with t1 as
+        (
+        select d,
+               trunc(min(d),'MM') startdate,
+               last_day(d) lastdate,
+               last_day(d)-trunc(min(d),'MM')+1 ndays
+        from 
+        (
+        select to_date('13-05-2025','dd-MM-yyyy') d from dual) a
+        ),
+t2 as(select startdate+level-1 tdate from t1
+connect by level<=ndays)
+select --tdate,
+to_char(tdate,'day') tday,
+count(*) day_count
+from t2
+where trim(to_char(tdate,'day')) in('saturday','sunday')
+group by to_char(tdate,'day');
+
+---Oracle SQL Practical question with answer Write a SQL to print Cricket Dashboard
+---performance point of view
+select * from cricket;
+
+with t1 as 
+        (
+        select TEAM_A a, TEAM_B b,
+               case when team_a=winner then 1 else 0 end t_a,
+               case when team_b=winner then 1 else 0 end t_b
+        from cricket),
+t2 as (select --a,t_a,b,t_b,r,
+       decode(r,1,a,b) teams,
+       decode(r,1,t_a,t_b) won_count
+from t1,(select rownum r from dual connect by level<=2))
+select teams,
+       count(won_count) matches_played,
+       sum(won_count) matches_won,
+       count(won_count)-sum(won_count) matches_lost
+       from t2
+group by teams;
+-----end  03-06-2024----------------------------------
 
 
 
