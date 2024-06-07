@@ -498,6 +498,44 @@ select teams,
 group by teams;
 -----end  03-06-2024----------------------------------
 
+--07-06-2024 Oracle SQL Practical question with answer | SQL to find list of DICE rolled combinations
+
+with t as 
+(
+select level l from dual connect by level<=6
+)
+select '('||t1.l || ','||t2.l ||','||t3.l||')' result from t t1,t t2,t t3
+where t3.l=t1.l+t2.l;
+
+with t as 
+(
+select level l from dual connect by level<=6
+)
+select '('||t1.l || ','||t2.l ||','||t3.l||')' result from t t1,t t2,t t3
+where (t3.l=t1.l+t2.l or t2.l=t1.l+t3.l or t1.l=t3.l+t2.l);
+
+---Oracle SQL Practical question with answer | Sort the NUMBERS in the comma separated list
+with t as
+(
+select '3,10,5,1,7,55,75,100,42,12,17' d from dual
+),
+p as (select --d, 
+       regexp_substr(d,'[^,]+',1,level) d1
+     from t
+     connect by level<=regexp_count(d,',')+1)
+select listagg(d1,',') within group(order by to_number(d1)) result from p;
+
+with t as
+(
+select 'WELCOME'  d from dual
+),
+p as (select d,
+       substr(d,level,1) d1
+        from t
+        connect by level<=length(d))
+select listagg(d1,',') within group(order by d1) result from p;
+
+--end 07-06-2024------------------------------------------------------
 
 
 
