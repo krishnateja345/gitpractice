@@ -537,6 +537,52 @@ select listagg(d1,',') within group(order by d1) result from p;
 
 --end 07-06-2024------------------------------------------------------
 
+--09-06-2024  Oracle SQL Practical question with answer | Reverse the String without using reverse function
+
+with ds as
+(
+select 'WELCOME' d from dual
+)
+select reverse(d) result from ds;
+
+with ds as
+(
+select 'WELCOME' d from dual
+),
+t1 as (select d,
+       substr(d,level,1) d1,
+       level l
+from ds
+connect by level<=length(d))
+select --d,d1,l,
+       listagg(d1) within group(order by l desc) result
+from t1;
+
+---Oracle SQL Practical question with answer | Consolidate two rows as single row
+select * from emp_a;--count 11
+
+select * from emp_b;-- count 6
+
+delete from emp_b;
+
+select * from emp_b;--count 0
+
+insert into emp_b
+with ds as
+(
+select empno,ename,rownum,
+count(*) over() cnt,
+round(count(*) over()/2) rcnt,
+round(count(*) over()/2)-rownum reqno
+from emp_a),
+t1 as(select empno,ename,reqno from ds where reqno>=0),
+t2 as (select empno,ename,reqno from ds where reqno<0)
+select t1.empno,t1.ename,t2.empno,t2.ename from t1 left outer join t2 on t1.reqno=abs(t2.reqno)
+order by 1;
+
+select * from emp_b;
+
+---end  09-06-2024--------------------------------------------
 
 
 
