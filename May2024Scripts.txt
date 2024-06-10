@@ -584,6 +584,37 @@ select * from emp_b;
 
 ---end  09-06-2024--------------------------------------------
 
+--10-06-2024 Oracle SQL Practical question with answer Fill the missing dates with last not null value
+
+with ds as
+(
+select min(txn_date) midate,
+       max(txn_date) mxdate,
+       max(txn_date)-min(txn_date)+1 ndates
+from txn_data),
+t1 as (select midate+level-1 txn_date from ds
+connect by level<=ndates)
+select 
+t1.txn_date,
+--t2.txn_date,
+--t2.txn_amount,
+last_value(t2.txn_amount ignore nulls) over(order by t1.txn_date) req_txn_amount
+from t1 left outer join txn_data t2  on t1.txn_date=t2.txn_date
+order by t1.txn_date;
+
+--query to compute start and end value of given sequence
+with ds as
+(
+select 
+id,
+rownum rno,
+id-ROWNUM grpno
+from ranges)
+select min(id) start_range,max(id) end_range from ds
+group by grpno
+order by grpno;
+-----end 10-06-2023------------------------------------------
+
 
 
 
