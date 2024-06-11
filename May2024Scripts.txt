@@ -615,9 +615,65 @@ group by grpno
 order by grpno;
 -----end 10-06-2023------------------------------------------
 
+--11-06-2024 Oracle SQL Practical question with answer Expand the range to Sequence Numbers
+create table ranges2
+(
+    start_range number,
+    end_range number
+);
+
+insert into ranges2 values(1,3);
+insert into ranges2 values(5,5);
+insert into ranges2 values(7,9);
+insert into ranges2 values(11,12);
+insert into ranges2 values(15,16);
+insert into ranges2 values(20,20);
+commit;
 
 
+select t2.r from 
+(
+select start_range,end_range from ranges_1) t1,
+(select rownum r from dual
+connect by level<=(select max(end_range) from ranges_1) 
+) t2
+where t2.r>=t1.start_range and t2.r<=t1.end_range ;
+
+---Second Method
 
 
+select --start_range,end_range,r-1,
+    start_range+r-1 result
+    from ranges2,
+    lateral(select rownum r from dual connect by level<=end_range-start_range+1);
 
 
+---Oracle SQL Practical question with answer Grouping The Range Data
+
+create table cars 
+(
+    name varchar(20),
+    start_year number,
+    end_year number
+);
+
+
+insert into cars values('Swift',2007,2009);
+insert into cars values('Swift',2009,2011);
+insert into cars values('Swift',2011,2013);
+insert into cars values('Maruthi',2009,2011);
+insert into cars values('Maruthi',2013,2015);
+commit;
+
+
+select name,min(req_year) start_year, max(req_year) end_year
+    from
+    (
+select distinct name,--start_year,end_year,r-1,
+    start_year+r-1 req_year
+    from cars,
+     lateral(select rownum r from dual connect by level<=end_year-start_year+1)
+order by name,start_year+r-1)
+group by name,req_year-rownum;
+
+--end  11-06-2024--------------------------------
