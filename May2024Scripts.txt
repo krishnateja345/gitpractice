@@ -677,3 +677,108 @@ order by name,start_year+r-1)
 group by name,req_year-rownum;
 
 --end  11-06-2024--------------------------------
+
+----12-06-2024 Oracle SQL Practical question with answer / SQL to check whether given sudoku is resolved
+
+
+select * from sudoku;
+
+update sudoku set c3=9 where row_no='R3';
+
+commit;
+
+select col_name,col_val col_sum from
+        (
+        select sum(c1) c1,sum(c2) c2,sum(c3) c3,sum(c4) c4,sum(c5) c5,
+        sum(c6) c6,sum(c7) c7,sum(c8) c8,sum(c9) c9 from sudoku
+        )
+unpivot(col_val for col_name in(c1,c2,c3,c4,c5,c6,c7,c8,c9));
+       
+select row_no,c1+c2+c3+c4+c5+c6+c7+c8+c9 row_sum from sudoku;
+
+select grp||col_name grp_no,col_val grp_sum from
+(
+select  'G'||ceil(rownum/3) grp,sum(c1+c2+c3) g1,sum(c4+c5+c6) g2,sum(c7+c8+c9) g3 
+from sudoku
+group by 'G'||ceil(rownum/3)
+order by 1
+) unpivot(col_val for col_name in(G1,G2,G3));
+
+--grouping of all the above three select statements rows,cols,grps
+select case when sum(distinct col_sum)=45 then 'SUDOKU IS VALID'
+       else 'SUDOKU IS INVALID' end Result
+from
+(
+select col_name,col_val col_sum from
+        (
+        select sum(c1) c1,sum(c2) c2,sum(c3) c3,sum(c4) c4,sum(c5) c5,
+        sum(c6) c6,sum(c7) c7,sum(c8) c8,sum(c9) c9 from sudoku
+        )
+unpivot(col_val for col_name in(c1,c2,c3,c4,c5,c6,c7,c8,c9))
+union all
+select row_no,c1+c2+c3+c4+c5+c6+c7+c8+c9 row_sum from sudoku
+union all
+select grp||col_name grp_no,col_val grp_sum from
+(
+select  'G'||ceil(rownum/3) grp,sum(c1+c2+c3) g1,sum(c4+c5+c6) g2,sum(c7+c8+c9) g3 
+from sudoku
+group by 'G'||ceil(rownum/3)
+order by 1
+) unpivot(col_val for col_name in(G1,G2,G3))
+);
+
+---Finding where exactly the sudoku puzzle is incorrect
+select col_sum val,
+       listagg(col_name,',') within group(order by col_name) col_row_grp_names,
+       case when sum(distinct col_sum)=45 then 'SUDOKU IS VALID'
+       else 'SUDOKU IS INVALID' end Result
+from
+(
+select col_name,col_val col_sum from
+        (
+        select sum(c1) c1,sum(c2) c2,sum(c3) c3,sum(c4) c4,sum(c5) c5,
+        sum(c6) c6,sum(c7) c7,sum(c8) c8,sum(c9) c9 from sudoku
+        )
+unpivot(col_val for col_name in(c1,c2,c3,c4,c5,c6,c7,c8,c9))
+union all
+select row_no,c1+c2+c3+c4+c5+c6+c7+c8+c9 row_sum from sudoku
+union all
+select grp||col_name grp_no,col_val grp_sum from
+(
+select  'G'||ceil(rownum/3) grp,sum(c1+c2+c3) g1,sum(c4+c5+c6) g2,sum(c7+c8+c9) g3 
+from sudoku
+group by 'G'||ceil(rownum/3)
+order by 1
+) unpivot(col_val for col_name in(G1,G2,G3))
+)
+group by col_sum;
+
+update sudoku set c3=5 where row_no='R3';
+
+commit;
+
+---Oracle SQL Practical question with answer | SQL to convert list of numbers into table format
+
+--x-axis
+select c1,c2,c3,c4,c5 from 
+(
+select level l,
+ceil(rownum/5) x,
+row_number() over(partition by ceil(rownum/5) order by level) y
+from dual
+connect by level<=25)
+pivot(sum(l) for y in(1 c1,2 c2,3 c3,4 c4,5 c5))
+order by 1;
+
+--Y-axis
+select c1,c2,c3,c4,c5 from 
+(
+select level l,
+ceil(rownum/5) x,
+row_number() over(partition by ceil(rownum/5) order by level) y
+from dual
+connect by level<=25)
+pivot(sum(l) for x in(1 c1,2 c2,3 c3,4 c4,5 c5))
+order by 1;
+
+--end  12-06-2023---------------------------------------
