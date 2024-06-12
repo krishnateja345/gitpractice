@@ -781,4 +781,20 @@ connect by level<=25)
 pivot(sum(l) for x in(1 c1,2 c2,3 c3,4 c4,5 c5))
 order by 1;
 
+--Using Mod and Ceil Method
+
+with ds as
+(
+select level d from dual
+connect by level<=25
+)select --d,
+--ceil(d/5),
+max(case when mod(d,5)=1 then d end) c1,
+max(case when mod(d,5)=2 then d end) c2,
+max(case when mod(d,5)=3 then d end) c3,
+max(case when mod(d,5)=4 then d end) c4,
+max(case when mod(d,5)=0 then d end) c5
+from ds
+group by ceil(d/5);
+
 --end  12-06-2023---------------------------------------
