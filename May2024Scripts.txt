@@ -798,3 +798,85 @@ from ds
 group by ceil(d/5);
 
 --end  12-06-2023---------------------------------------
+
+--13-06-2024 Oracle SQL Practical question | SQL to fetch Emp hierarchical data in Flat format
+
+select EMPNO1, ENAME1, L1, 
+       EMPNO2, ENAME2, L2, 
+       EMPNO3, ENAME3, L3, 
+       EMPNO4, ENAME4, L4, 
+       EMPNO empno5, ENAME ename5,
+       case when e5.empno is not null then 5 end l5
+       from 
+(
+select EMPNO1, ENAME1, L1, 
+       EMPNO2, ENAME2, L2, 
+       EMPNO3, ENAME3, L3, 
+       EMPNO EMPNO4, ENAME ENAME4,
+       case when e4.empno is not null then 4 end l4
+       from 
+(
+select EMPNO1, ENAME1, L1, 
+       EMPNO2, ENAME2, L2, 
+       EMPNO EMPNO3, ENAME ENAME3,3 L3 from 
+(
+select e1.EMPNO EMPNO1, e1.ENAME ENAME1, e1.L l1, 
+       e2.EMPNO EMPNO2, e2.ENAME ENAME2,2 l2
+from (
+select empno,ename,1 l from emp e
+where mgr is null) e1 left outer join emp e2 on e2.mgr=e1.empno)e2
+left outer join emp e3 on e3.mgr=e2.empno2)e3
+left outer join emp e4 on e4.mgr=e3.empno3)e4
+left outer join emp e5 on e5.mgr=e4.empno4
+order by 1,4;
+
+--Second Method
+select --empno_lst,ename_lst,
+       regexp_substr(empno_lst,'\w+',1,1) empno1,regexp_substr(ename_lst,'\w+',1,1) ename1,1 l1,
+       regexp_substr(empno_lst,'\w+',1,2) empno2,regexp_substr(ename_lst,'\w+',1,2) ename2,2 l2,
+       regexp_substr(empno_lst,'\w+',1,3) empno3,regexp_substr(ename_lst,'\w+',1,3) ename3,3 l3,
+       regexp_substr(empno_lst,'\w+',1,4) empno4,regexp_substr(ename_lst,'\w+',1,4) ename4,
+       case when regexp_substr(empno_lst,'\w+',1,4) is not null then 4 end l4,
+       regexp_substr(empno_lst,'\w+',1,5) empno5,regexp_substr(ename_lst,'\w+',1,5) ename5,
+       case when regexp_substr(empno_lst,'\w+',1,5) is not null then 5 end l5
+from
+(
+select empno,ename,
+        trim(',' from sys_connect_by_path(empno,',')) empno_lst,
+        trim(',' from sys_connect_by_path(ename,',')) ename_lst,
+        CONNECT_BY_ISLEAF is_leaf
+from emp
+connect by prior empno=mgr
+start with mgr is null)
+where is_leaf=1
+order by 1,4;
+
+--Oracle SQL Practical question | SQL to group the employees into multiple team
+--2 members each group
+select city,listagg(ename,',') within group(order by ename) empnames,
+       'Team-'||row_number() over(order by city) teamname
+from 
+(
+select city,ename,ceil(row_number() over(partition by city order by rownum)/2) grp from emp_city
+)
+group by city,grp;
+
+--3 members each group
+select city,listagg(ename,',') within group(order by ename) empnames,
+       'Team-'||row_number() over(order by city) teamname
+from 
+(
+select city,ename,ceil(row_number() over(partition by city order by rownum)/3) grp from emp_city
+)
+group by city,grp;
+
+--4 members each group
+select city,listagg(ename,',') within group(order by ename) empnames,
+       'Team-'||row_number() over(order by city) teamname
+from 
+(
+select city,ename,ceil(row_number() over(partition by city order by rownum)/4) grp from emp_city
+)
+group by city,grp;
+
+---end 13-06-2024--------------------------------------
