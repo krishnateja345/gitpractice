@@ -880,3 +880,39 @@ select city,ename,ceil(row_number() over(partition by city order by rownum)/4) g
 group by city,grp;
 
 ---end 13-06-2024--------------------------------------
+
+--14-06-2024  Oracle SQL Practical question | SQL to Get Last three consecutive status count
+
+with ds as
+(
+select id,rep_month,status,
+       decode(status,'red',0,1) flag
+from reports
+--where id=3
+),
+t1 as (select id,rep_month,status,flag,
+       sum(flag) over(partition by id order by to_date(rep_month,'Mon-yy') desc) sflag
+from ds)
+select id,count(*) id_count from t1 where sflag=0
+group by id
+having count(*)>=3;
+
+--Oracle SQL Practical question | SQL to summarize data one row for continuous play of album
+
+with ds as
+(
+select dt,val,
+nvl(lag(val) over(order by dt),val) lval
+from values_date
+),
+t1 as (select dt,
+val,
+--lval,
+--decode(val,lval,0,1) dval,
+sum(decode(val,lval,0,1)) over(order by dt) sval
+from ds)
+select to_char(min(dt),'dd-MON-yy')tdate,val,count(*) val_count from t1
+group by val,sval
+order by 1;
+
+--end 14-06-2024--------------------------------
