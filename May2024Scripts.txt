@@ -916,3 +916,77 @@ group by val,sval
 order by 1;
 
 --end 14-06-2024--------------------------------
+
+--19-06-2024 Oracle SQL Practical question | SQL to fill the missing months with previous months salary
+
+/*
+create table empsal
+(
+ename varchar(50),
+mnyr varchar(50),
+salary number
+)
+
+insert into empsal values('peter','May-19',5000);
+insert into empsal values('peter','Aug-19',10000);
+insert into empsal values('peter','Mar-20',15000);
+insert into empsal values('soloman','Oct-19',20000);
+insert into empsal values('soloman','Feb-20',30000);
+commit;
+
+select * from empsal;
+
+
+*/
+
+
+with ds as
+(
+select ename,to_date(mnyr,'MM-yy') dt,salary from empsal
+),
+t1 as 
+(select ename,dt,lead(dt,1) over(partition by ename order by dt) nxtdt,salary from ds
+order by ename),
+t2 as (select ename,
+    dt,
+    nxtdt,
+    salary,
+    months_between(nxtdt,dt),
+    r-1,
+    add_months(dt,r-1) rdt
+    from t1,
+lateral(select rownum r from dual connect by level<=months_between(nxtdt,dt)))
+select ename,to_char(rdt,'Mon-yy') rdt,salary from t2;
+
+--Oracle SQL Practical question | SQL to count number of occurrences of a vowels in a string
+
+with ds
+as(
+select 'WELCOME' str from dual
+)
+select str,
+       regexp_count(str,'A') A,
+       regexp_count(str,'E') E,
+       regexp_count(str,'I') I,
+       regexp_count(str,'O') O,
+       regexp_count(str,'U') U
+       
+from ds
+-- connect by level<=length(str)
+;
+
+--second method
+
+with ds
+    as
+    (select distinct ename from empsal --where ename='peter'
+    ),
+t1 as (select ename,r,
+    upper(substr(ename,r,1)) sename
+    from ds,
+lateral(select rownum r from dual connect by level<=length(ename)))
+select * from 
+    (select ename,sename,count(*) cnt from t1 where sename in('A','E','I','O','U')
+    group by ename,sename) pivot(max(cnt) for sename in('A','E','I','O','U') );
+
+--end 19-06-2024----------------------------------
