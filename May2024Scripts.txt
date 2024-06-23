@@ -990,3 +990,29 @@ select * from
     group by ename,sename) pivot(max(cnt) for sename in('A','E','I','O','U') );
 
 --end 19-06-2024----------------------------------
+
+---23-06-2024--------
+---query to get no of vowels present in the given input
+select ename,
+       --length(ename) l,
+       --replace(upper(ename),'A'), 
+       length(ename)-length(replace(upper(ename),'A') ) A,
+       length(ename)-length(replace(upper(ename),'E') ) E,
+       length(ename)-length(replace(upper(ename),'I') ) I,
+       length(ename)-length(replace(upper(ename),'O') ) O,
+       length(ename)-length(replace(upper(ename),'U') ) U
+from emp_a
+
+---query to ger list of days for a given month
+with ds as
+(
+select 'jan-2024' m from dual
+),
+ds1 as (select to_date(m,'MON-yy') tdate,
+       last_day(to_date(m,'MON-yy')) lday,
+       last_day(to_date(m,'MON-yy'))-to_date(m,'MON-yy')+1 ndays
+from ds)
+select to_char(tdate+level-1,'dd-MON-yyyy') tdate from ds1
+connect by level<=ndays;
+
+--end 23-06-2023-----------------------------
