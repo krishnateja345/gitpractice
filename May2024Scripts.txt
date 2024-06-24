@@ -1016,3 +1016,90 @@ select to_char(tdate+level-1,'dd-MON-yyyy') tdate from ds1
 connect by level<=ndays;
 
 --end 23-06-2023-----------------------------
+
+--24-06-2024  Oracle SQL Practical question | SQL to convert comma separated string to rows and vice versa
+
+select * from empdept;
+
+select deptno,
+       listagg(ename,',') within group(order by ename) empgrp 
+from empdept
+group by deptno;
+
+/*
+create table empgrp
+(
+    deptno int,
+    ename varchar(50)
+);
+
+insert into empgrp values(10,'RAGHU,RAJU,RAVI');
+insert into empgrp values(20,'MOHAN,PRIYA');
+insert into empgrp values(30,'PRAVEEN');
+commit;
+*/
+
+with ds1 as
+    (
+    select deptno,ename,
+    r
+    from empgrp,lateral(select rownum r from dual connect by level<=regexp_count(ename,',')+1)
+    )
+select deptno,--ename,
+    regexp_substr(ename,'\w+',1,r) result
+    from ds1;
+
+Oracle SQL Practical question | SQL to compute year end credit card balance
+
+---Query 1
+select to_char(tran_date,'Mon-yy') tran_month,
+       --tran_amt,
+       sum(case when tran_amt>=0 then tran_amt else 0 end) d_amt,
+       sum(case when tran_amt<0 then tran_amt else 0 end) c_amt,
+       sum(case when tran_amt<0 then 1 else 0 end) cc_cnt,
+       case when (sum(case when tran_amt<0 then 1 else 0 end)<3
+       or abs(sum(case when tran_amt<0 then tran_amt else 0 end))<100) then -5 else 0
+       end fee
+from tran_amount
+group by to_char(tran_date,'Mon-yy')
+order by 1;
+
+---Query 2
+select add_months(to_date('jan-20','Mon-yy'),level-1) tran_date,
+0 tran_amt       
+from dual
+connect by level<=12;
+
+--- Query 3 Combining Query from tran_amount and Query 2
+select tran_date,tran_amt from tran_amount
+union all
+select add_months(to_date('jan-20','Mon-yy'),level-1) tran_date,
+0 tran_amt       
+from dual
+connect by level<=12;
+
+--Query 4 Final Combining and doing aggregation from Query1 and Query 3
+select --TRAN_MONTH,
+sum(D_AMT)+sum(C_AMT)+sum(FEE) result from 
+(
+select to_char(tran_date,'Mon-yy') tran_month,
+       --tran_amt,
+       sum(case when tran_amt>=0 then tran_amt else 0 end) d_amt,
+       sum(case when tran_amt<0 then tran_amt else 0 end) c_amt,
+       sum(case when tran_amt<0 then 1 else 0 end) cc_cnt,
+       case when (sum(case when tran_amt<0 then 1 else 0 end)<3
+       or abs(sum(case when tran_amt<0 then tran_amt else 0 end))<100) then -5 else 0
+       end fee
+from (
+select tran_date,tran_amt from tran_amount
+union all
+select add_months(to_date('jan-20','Mon-yy'),level-1) tran_date,
+0 tran_amt       
+from dual
+connect by level<=12
+)
+group by to_char(tran_date,'Mon-yy')
+order by to_date(to_char(tran_date,'Mon-yy'),'Mon-yy')
+);
+
+--end 24-06-2024--------------------------------
