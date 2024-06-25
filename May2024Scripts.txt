@@ -1103,3 +1103,60 @@ order by to_date(to_char(tran_date,'Mon-yy'),'Mon-yy')
 );
 
 --end 24-06-2024--------------------------------
+
+--25-06-2024  Oracle SQL Practical question | SQL to find the set of rows in hierarchical relational data
+
+select * from ids;
+
+with ds as
+        (
+        select id from
+        (
+        select id,old_id,
+               CONNECT_BY_ISLEAF lf
+        from ids
+        connect by prior old_id=id
+        start with id=10
+        )where lf=1
+        )
+select id,old_id
+from ids
+connect by prior id=old_id
+start with id=(select id from ds);
+
+---Oracle SQL Practical question | SQL to convert data representation in different format
+
+with ds as
+(
+select 
+       lag(ACTIVATION_DT) over(order by ACTIVATION_DT) p_act_dt,
+       lag(DEACTIVATION_DT) over(order by ACTIVATION_DT) p_dact_dt,
+       lag(RATE) over(order by ACTIVATION_DT) p_rate,   
+       ACTIVATION_DT c_act_dt, DEACTIVATION_DT c_dact_dt, RATE c_rate,
+       lead(ACTIVATION_DT) over(order by ACTIVATION_DT) n_act_dt,
+       lead(DEACTIVATION_DT) over(order by ACTIVATION_DT) n_dact_dt,
+       lead(RATE) over(order by ACTIVATION_DT) n_rate   
+from tax_rate),
+ds1 as 
+(select --P_ACT_DT,
+ --P_DACT_DT,
+ --P_RATE,
+ C_ACT_DT,
+ C_DACT_DT,
+ C_RATE,
+ --N_ACT_DT,
+ --N_DACT_DT,
+ --N_RATE,
+ case when p_act_dt is null or (C_ACT_DT<>P_DACT_DT+1) then 'Added' 
+      when C_RATE<>P_RATE then 'Modified' end changes,
+ case when N_ACT_DT is null or (C_DACT_DT+1<>N_ACT_DT) then 'Removed' end changes1,
+ r
+ from ds,(select rownum r from dual connect by level<=2))
+ select --C_ACT_DT, C_DACT_DT, C_RATE, CHANGES, CHANGES1, R,
+        to_char(decode(r,1,C_ACT_DT,C_DACT_DT),'dd-Mon-yy') dt,
+        c_rate rate,
+        decode(r,1,changes,changes1) changes
+ from ds1
+ where decode(r,1,changes,changes1) is not null
+ order by decode(r,1,C_ACT_DT,C_DACT_DT);
+ --end  25-06-2024--------------------------------------
