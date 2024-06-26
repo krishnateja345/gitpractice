@@ -1160,3 +1160,59 @@ ds1 as
  where decode(r,1,changes,changes1) is not null
  order by decode(r,1,C_ACT_DT,C_DACT_DT);
  --end  25-06-2024--------------------------------------
+
+ --26-06-2024  Oracle SQL Practical question | SQL to convert data representation in different format | METHOD2
+
+with ds as
+(
+select --p.ACTIVATION_DT p_act_dt, p.DEACTIVATION_DT p_dact_dt, p.RATE p_rate,
+       c.ACTIVATION_DT c_act_dt, c.DEACTIVATION_DT c_dact_dt, c.RATE c_rate,
+       --n.ACTIVATION_DT n_act_dt, n.DEACTIVATION_DT n_dact_dt, n.RATE n_rate,
+       case when p.ACTIVATION_DT is null then 'Added' 
+            when c.rate<>p.rate then 'Modified' end Changes1,
+       case when n.ACTIVATION_DT is null then 'Removed' end Changes2
+from tax_rate c
+left outer join tax_rate p on (p.DEACTIVATION_DT+1=c.ACTIVATION_DT)
+left outer join tax_rate n on (c.DEACTIVATION_DT+1=n.ACTIVATION_DT))
+select to_char(dt,'dd-Mon-yy') dt,rate,change_log from
+(
+select C_ACT_DT dt, C_RATE rate, CHANGES1 change_log from ds
+union all 
+select C_DACT_DT, C_RATE, CHANGES2 change_log from ds
+) 
+where change_log is not null
+order by to_date(dt,'dd-MM-yy')
+;
+
+---Oracle SQL Practical question | Oracle SQL to check whether two strings are anagram of each other
+
+/*
+   create table anagram(sno number,
+                 str1 varchar(30) ,
+                 str2 varchar(30)
+                );
+select * from anagram;
+
+insert into anagram values(1,'HEART','EARTH');
+insert into anagram values(2,'APPLE','ORANGE');
+insert into anagram values(3,'A GENTLEMAN','ELEGANT MAN');
+insert into anagram values(4,'SILENT','LISTEN');
+insert into anagram values(5,'APPLE','MANGO');
+COMMIT;
+
+*/
+select sno,str1,str2,--r,
+       --substr(str1,r,1) rstr1,
+       --substr(str2,r,1) rstr2,
+       decode(listagg(substr(str1,r,1)) within group(order by substr(str1,r,1)) ,
+       listagg(substr(str2,r,1)) within group(order by substr(str2,r,1)) ,'YES','NO') is_anagram
+    from 
+    (
+select sno,str1,str2,
+    --length(str1) l1,
+    --length(str2) l2,
+    --greatest(length(str1),length(str2)) gt
+    r
+    from anagram,lateral(select rownum r from dual connect by level<=greatest(length(str1),length(str2))))
+    group by sno,str1,str2;
+--end  26-06-2023-------------------------------------------------
