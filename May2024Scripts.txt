@@ -1216,3 +1216,67 @@ select sno,str1,str2,
     from anagram,lateral(select rownum r from dual connect by level<=greatest(length(str1),length(str2))))
     group by sno,str1,str2;
 --end  26-06-2023-------------------------------------------------
+
+--27-06-2024  Oracle SQL Practical question | Oracle SQL to divide the rows into groups of data | NTILE function
+
+select GRP_NO, SNO, SNAME, MIN_SNO, MAX_SNO from 
+(
+select
+ntile(3) over(order by sno) grp_no,
+sno,
+sname,
+null min_sno,
+null max_sno
+from stud
+union all
+select grp_no,null sno,null sname, min(sno) min_sno,max(sno) max_sno 
+from
+(
+select
+ntile(3) over(order by sno) grp_no,
+sno,
+sname
+from stud)
+group by grp_no order by grp_no,sno);
+
+
+select GRP_NO, SNO, SNAME, MIN_SNO, MAX_SNO from 
+(
+select
+ntile(3) over(order by sno) grp_no,
+sno,
+sname,
+null min_sno,
+null max_sno
+from stud
+union all
+select grp_no,null sno,null sname, min(sno) min_sno,max(sno) max_sno 
+from
+(
+select
+ntile(3) over(order by sno) grp_no,
+sno,
+sname
+from stud)
+group by grp_no order by grp_no,sno nulls first);
+
+---Oracle SQL Practical question | Oracle SQL to find total time and work time and break time
+
+with ds as
+(
+select ENAME, 
+       lag(PUNCH_DESC) over(partition by ename order by punch_time) l_punch_desc,
+       lag(PUNCH_TIME) over(partition by ename order by punch_time) l_punch_time,
+       PUNCH_DESC, PUNCH_TIME
+from emp_logins),
+t1 as (select ENAME, --L_PUNCH_DESC, L_PUNCH_TIME, 
+       PUNCH_DESC, PUNCH_TIME,
+       round((case when L_PUNCH_DESC='Punch In' then PUNCH_TIME-L_PUNCH_TIME end)*24,2) w_time,
+       round((case when L_PUNCH_DESC='Punch Out' then PUNCH_TIME-L_PUNCH_TIME end)*24,2) b_time
+from ds),
+t2 as (select ENAME, --PUNCH_DESC, --PUNCH_TIME, 
+nvl(W_TIME,0) W_TIME, nvl(B_TIME,0) B_TIME from t1)
+select ename,sum(w_time)+sum(b_time) total_time,sum(w_time) work_time,sum(b_time) break_time from t2
+group by ename;
+
+---end 27-06-2024---------------------------------------------------------
