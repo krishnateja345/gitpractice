@@ -1280,3 +1280,84 @@ select ename,sum(w_time)+sum(b_time) total_time,sum(w_time) work_time,sum(b_time
 group by ename;
 
 ---end 27-06-2024---------------------------------------------------------
+
+--28-06-2024  Oracle SQL Practical question | Oracle SQL to compute group number for repeating number
+
+with ds as
+(
+select c1,c2,
+       nvl(lag(c2,1) over(order by c1),0) lc2
+from col_t
+)
+select c1,
+       c2,
+       --lc2, 
+       --decode(c2,lc2,0,1) dc2,
+       sum(decode(c2,lc2,0,1)) over(order by c1) grp_no
+from ds;
+
+--Oracle SQL Practical question | Oracle SQL to compute count of group of repeating values
+--First Method:
+alter session set nls_date_format ='dd-MM-yyyy';
+
+with ds as
+(
+select dt,cd,
+       lag(cd,1) over(order by dt),
+       decode(cd,lag(cd,1) over(order by dt),0,1) d
+from col_values),
+t1 as(select dt,cd,d,
+       sum(d) over(order by dt) sd
+from ds),
+t2 as (select distinct cd,sd from t1
+order by cd)
+select cd,count(*) group_count from t2
+group by cd;
+
+-- Query to get Actual count of Code values(Non Distinct Values)
+
+with ds as
+(
+select dt,cd,
+       lag(cd,1) over(order by dt),
+       decode(cd,lag(cd,1) over(order by dt),0,1) d
+from col_values),
+t1 as(select dt,cd,d,
+       sum(d) over(order by dt) sd
+from ds),
+t2 as (select  cd,sd from t1  --removed distinct clause here
+order by cd)
+select cd,count(*) group_count from t2
+group by cd;
+
+--Second Method
+
+with ds as
+(
+select dt,cd,
+       row_number() over(order by dt) rn1,
+       row_number() over(partition by cd order by dt) rn2
+from col_values
+),
+t1 as (select dt,cd,rn1-rn2 rn from ds),
+t2 as(select distinct cd,rn from t1
+order by cd)
+select cd,count(*) group_count from t2
+group by cd;
+
+-- Query to get Actual count of Code values(Non Distinct Values)
+
+with ds as
+(
+select dt,cd,
+       row_number() over(order by dt) rn1,
+       row_number() over(partition by cd order by dt) rn2
+from col_values
+),
+t1 as (select dt,cd,rn1-rn2 rn from ds),
+t2 as(select  cd,rn from t1  --Removed distinct clause
+order by cd)
+select cd,count(*) group_count from t2
+group by cd;
+
+----end   28-06-2024--------------------------------------------------
