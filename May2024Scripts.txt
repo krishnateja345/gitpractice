@@ -1361,3 +1361,62 @@ select cd,count(*) group_count from t2
 group by cd;
 
 ----end   28-06-2024--------------------------------------------------
+
+--01-07-2024 Oracle SQL Practical question | Oracle SQL to concatenate previous row value continuously
+
+with ds as
+(
+select col1,col2,str,instr(str||',',',',1,r) i,r from 
+(
+select col1,col2,
+       listagg(col2,',') within group(order by col2) over(partition by col1) str,
+       row_number() over( partition by col1 order by col1) r
+from col_test
+))
+select COL1, COL2, --STR, I,
+       substr(str,1,i-1) rstr
+from ds;
+
+---Oracle SQL Practical question | Oracle SQL to Find missing number in given range of values
+
+create table serial_tab1
+(
+name varchar(20),
+s_start int,
+s_end int
+);
+
+insert into serial_tab1 values('Serial_1',1,10);
+
+insert into serial_tab1 values('Serial_2',15,20);
+
+commit;
+
+create table serial_tab2
+(
+name varchar(20),
+val int
+);
+
+insert into serial_tab2 values('Serial_1',1);
+insert into serial_tab2 values('Serial_1',2);
+insert into serial_tab2 values('Serial_1',3);
+insert into serial_tab2 values('Serial_1',6);
+insert into serial_tab2 values('Serial_1',8);
+insert into serial_tab2 values('Serial_1',10);
+insert into serial_tab2 values('Serial_2',16);
+insert into serial_tab2 values('Serial_2',17);
+
+commit;
+
+select * from serial_tab1;
+
+select * from serial_tab2;
+
+select name,s_start+r-1 val--,s_end,r 
+    from serial_tab1,
+    lateral(select rownum r from dual connect by level<=s_end-s_start+1)
+minus
+select name,val from serial_tab2;
+
+---end  01-07-2024-------------------------------
