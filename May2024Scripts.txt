@@ -1420,3 +1420,45 @@ minus
 select name,val from serial_tab2;
 
 ---end  01-07-2024-------------------------------
+
+--02-07-2024  Oracle SQL Practical question | Oracle SQL to Compute values based on previous rows
+with ds as 
+(
+select id,dt,val,
+       sum(val) over(partition by id order by to_date(dt,'MM-yy')) sval,
+       row_number() over(partition by id order by to_date(dt,'MM-yy')) rn
+from iddtval)
+select id,dt,--sval,rn,
+       round(sval/rn) res
+from ds;
+
+---Oracle SQL Practical question | Oracle SQL to print the all possible combination of numbers
+
+with ds as
+(
+select level l from dual
+connect by level<=3--n=3
+),
+t1 as (select '['||a.l||','||b.l||']' data  from ds a,ds b
+where a.l<b.l)
+select listagg(data,',') within group(order by data) res from t1;
+
+with ds as
+(
+select level l from dual
+connect by level<=4---n=4
+),
+t1 as (select '['||a.l||','||b.l||']' data  from ds a,ds b
+where a.l<b.l)
+select listagg(data,',') within group(order by data) res from t1;
+
+with ds as
+(
+select level l from dual
+connect by level<=5---n=5
+),
+t1 as (select '['||a.l||','||b.l||']' data  from ds a,ds b
+where a.l<b.l)
+select listagg(data,',') within group(order by data) res from t1;
+
+---end 02-07-2024--------------------------------------------------------------
