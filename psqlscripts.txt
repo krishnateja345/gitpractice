@@ -1,0 +1,45 @@
+----24072024
+drop table table2 ;
+	
+create table table2
+(c1 varchar(2));
+
+create table table3
+(c1 varchar(2))
+
+select * from table2;
+
+insert into table2 values('A');
+insert into table2 values('B');
+insert into table2 values('C');
+insert into table2 values('D');
+insert into table2 values('E');
+commit;
+
+select * from table3;
+
+insert into table3 values('A');
+insert into table3 values('C');
+insert into table3 values('E');
+insert into table3 values('G');
+commit;
+
+
+select * from table2 where c1 not in(select * from table3);
+
+select * from table2 where not exists(select * from table3 where table3.c1=table2.c1);
+
+select table2.c1 from table2 left outer join table3 on table2.c1=table3.c1
+where table3.c1 is null;
+
+select * from table2 where (select count(*) from table3 where table2.c1=table3.c1)<1;
+
+select * from table2 where (select count(*) from table3 where table2.c1=table3.c1)=0;
+
+select * from table2
+minus
+select * from table3;--MINUS won't work in postgresql use EXCEPT keyword instead
+
+select * from table2
+except
+select * from table3;
