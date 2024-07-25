@@ -43,3 +43,113 @@ select * from table3;--MINUS won't work in postgresql use EXCEPT keyword instead
 select * from table2
 except
 select * from table3;
+---------------------------------------------------end----------------------------------------------------------
+
+--25072024
+----------------SQL to generate Cricket Dashboard
+--DDL
+CREATE TABLE myschema.cricket (
+    match_no   numeric,
+    team_a     CHAR(30),
+    team_b     CHAR(30),
+    winner     CHAR(30)
+);
+
+select * from myschema.cricket;
+----Insert into Table
+insert into myschema.cricket values(01,'WESTINDIES','SRILANKA','WESTINDIES');
+insert into myschema.cricket values(02,'INDIA','SRILANKA','INDIA');
+insert into myschema.cricket values(03,'AUSTRALIA','SRILANKA','AUSTRALIA');
+insert into myschema.cricket values(04,'WESTINDIES','SRILANKA','SRILANKA');
+insert into myschema.cricket values(05,'AUSTRALIA','INDIA','AUSTRALIA');
+insert into myschema.cricket values(06,'WESTINDIES','SRILANKA','WESTINDIES');
+insert into myschema.cricket values(07,'INDIA','WESTINDIES','WESTINDIES');
+insert into myschema.cricket values(08,'WESTINDIES','AUSTRALIA','AUSTRALIA');
+insert into myschema.cricket values(09,'WESTINDIES','INDIA','INDIA');
+insert into myschema.cricket values(10,'AUSTRALIA','WESTINDIES','WESTINDIES');
+insert into myschema.cricket values(11,'WESTINDIES','SRILANKA','WESTINDIES');
+insert into myschema.cricket values(12,'INDIA','AUSTRALIA','INDIA');
+insert into myschema.cricket values(13,'SRILANKA','NEWZEALAND','SRILANKA');
+insert into myschema.cricket values(14,'NEWZEALAND','INDIA','INDIA');
+
+---writing the query
+select * from myschema.cricket;
+
+select teamname,count(*) matches_played from 
+	(
+	select team_a teamname from myschema.cricket
+	union all
+	select team_b from myschema.cricket
+	)
+group by teamname;
+
+select winner,count(*) matches_won from myschema.cricket
+group by winner;
+
+with t1 as 
+(
+select teamname,count(*) matches_played from 
+	(
+	select team_a teamname from myschema.cricket
+	union all
+	select team_b from myschema.cricket
+	)
+group by teamname
+),
+t2 as 
+(
+select winner,count(*) matches_won from myschema.cricket
+group by winner
+)
+select t1.teamname,t1.matches_played,coalesce(t2.matches_won,0) matches_won,
+	t1.matches_played-coalesce(t2.matches_won,0) matches_lost
+from t1 left outer join t2 on t1.teamname=t2.winner;
+
+
+-----Using Function
+
+--Function to get matches played
+/*
+create or replace function matches_played(in_teamname varchar)
+returns numeric
+language plpgsql
+as
+$$
+declare
+v_played_count numeric;
+begin
+select count(*) into v_played_count from myschema.cricket where team_a=in_teamname
+or team_b=in_teamname;
+return v_played_count;
+end;
+$$;
+*/
+
+
+--Function to get matches_won
+/*
+create or replace function matches_won(in_teamname varchar)
+returns numeric
+language plpgsql
+as
+$$
+declare
+v_won_count numeric;
+begin
+select count(*) into v_won_count from myschema.cricket where winner=in_teamname;
+return v_won_count;
+end;
+$$;
+*/
+
+select teamname,matches_played(teamname),matches_won(teamname),
+	   matches_played(teamname)-matches_won(teamname) matches_lost
+	from 
+(
+	select team_a teamname from myschema.cricket
+	union 
+	select team_b from myschema.cricket
+);
+
+commit;
+--------------------------------------------------------------------end----------------------------------------------------------
