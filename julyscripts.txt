@@ -94,3 +94,68 @@ select empno,ename,sal,getting_emps_gt_avg_sal(deptno) avg_sal from emp
 where sal>getting_emps_gt_avg_sal(deptno); 
 
 ----------------------------------------------------------end-------------------------------------------------------------------------
+
+-------------------------02082024-------------------------------------------------------------
+
+WITH t1 AS
+(
+SELECT 'WELCOME' str FROM dual
+)
+SELECT str,
+	   substr(str,LEVEL,1) str1,
+	   substr(str,LEVEL*-1,1) str2,
+	   substr(str,1,level) str3,
+	   substr(str,LEVEL) str4,
+	   rpad(' ',LEVEL,' ')||substr(str,LEVEL) str5,
+       rpad(' ',length(str)-level,' ')||substr(str,1,level) str6
+FROM t1
+CONNECT BY LEVEL<=LENGTH(str);
+------------------------------------------------------------------end-----------------------------------------------------------------
+
+---------------------------03082024-----------------------------------------------------------------------
+with t1 as 
+(
+select mail_name m from mail_det
+--where rownum=1
+),
+t2 as (select m,
+       instr(m,'@',1,1) "@pos",
+       instr(m,'.',1,1) fdot,
+       instr(m,'.',1,2) sdot
+from t1),
+t3 as
+(
+select M, "@pos", FDOT, SDOT, 
+       substr(m,"@pos"+1) domain_name,
+       substr(m,1,fdot-1) first_name,
+       substr(m,fdot+1,sdot-fdot-1) middle_name,
+       substr(m,sdot+1,"@pos"-sdot-1) last_name
+from t2
+)select m mail_name,first_name,middle_name,last_name,domain_name from t3;
+
+with t1 as 
+(
+select mail_name m from mail_det1
+--where rownum=1
+),
+t2 as (select m,
+       substr(m,1,instr(m,'@',1,1)-1) n,
+       substr(m,instr(m,'@',1,1)+1) dname
+from t1),
+t3 as
+(
+select M,n,dname,
+       instr(n,'.',1,1) fdot,
+       instr(n,'.',1,2) sdot
+from t2),
+t4 as
+(
+select M, N, DNAME, FDOT, SDOT,
+       decode(fdot,0,substr(n,1),substr(n,1,fdot-1)) fname,
+       decode(sdot,0,null,substr(n,fdot+1,sdot-fdot-1)) mname,
+       decode(fdot+sdot,0,null,substr(n,decode(sdot,0,fdot,sdot)+1))lname
+       
+from t3)
+select m,n,fdot,sdot,fname,mname,lname,
+dname from t4;
+----------------------------------------------end-------------------------------------------------------------------
