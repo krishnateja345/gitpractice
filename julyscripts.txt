@@ -159,3 +159,131 @@ from t3)
 select m,n,fdot,sdot,fname,mname,lname,
 dname from t4;
 ----------------------------------------------end-------------------------------------------------------------------
+
+--------------------------06082024----
+select * from emp;
+
+--alter session set nls_date_format='dd-mm-yyyy';
+
+select empno,ename,sal from emp;
+
+
+select 
+       sum(sal)
+from emp
+connect by prior empno=mgr
+start with ename='JONES';
+
+select empno,ename,sal,
+(select 
+       sum(sal)
+from emp b
+connect by prior b.empno=b.mgr
+start with b.ename=a.ename) group_sal
+from emp a;
+
+--drop function get_emp_group_sal
+create function get_emp_group_sal(in_ename varchar)
+return number
+as
+v_grp_sal number;
+begin
+select 
+        sum(sal) into v_grp_sal
+        from emp b
+        connect by prior b.empno=b.mgr
+        start with b.ename=in_ename;
+return v_grp_sal;
+end;
+/
+
+select empno,ename,sal,GET_EMP_GROUP_SAL(ename) group_sal
+from emp;
+
+-----09082024--------------------------------------------------------------
+
+select dept,
+       --year,
+       --res,
+       max(case when year=1 then res end) I_year,
+       max(case when year=2 then res end) II_year,
+       max(case when year=3 then res end) III_year,
+       max(case when year=4 then res end) IV_year
+from
+(
+select dept,year,
+       --count(result),
+       'P='||count(case when result='P' then result end)||',F='||
+       count(case when result='F' then result end) res
+from students
+group by dept,year
+)group by dept;
+
+
+--------year wise
+
+select --dept,
+       year,
+       --res,
+       max(case when dept='EEE' then res end) EEE,
+       max(case when dept='CSE' then res end) CSE,
+       max(case when dept='CVE' then res end) CVE,
+       max(case when dept='MECH' then res end) MECH,
+       max(case when dept='ECE' then res end) ECE
+from
+(
+select dept,year,
+       --count(result),
+       'P='||count(case when result='P' then result end)||',F='||
+       count(case when result='F' then result end) res
+from students
+group by dept,year
+)group by year 
+--dept;
+
+select * from
+(
+select dept,year,
+       --count(result),
+       'P='||count(case when result='P' then result end)||',F='||
+       count(case when result='F' then result end) res
+from students
+group by dept,year) pivot(max(res) for year in(1,2,3,4))
+
+select * from
+(
+select dept,year,
+       --count(result),
+       'P='||count(case when result='P' then result end)||',F='||
+       count(case when result='F' then result end) res
+from students
+group by dept,year
+order by year) pivot(max(res) for dept in('EEE','CSE','CVE','MECH','ECE'))
+
+----------------------------------end-------------------------------------------------------
+
+---12082024   Oracle SQL Practical question with answer Compute all the possible paths | Oracle SELF JOIN Example
+
+select * from cities;
+--1st Method
+select --a.city_id,
+       a.city_name,
+       --b.city_id,
+       b.city_name 
+from cities a,cities b
+where a.city_id<b.city_id;
+
+--2nd Method
+
+select --a.city_id,
+       --a.city_name,
+       distinct
+       greatest(a.city_name,b.city_name) gcity,
+       least(a.city_name,b.city_name) lcity
+       --b.city_id
+       --b.city_name 
+from cities a,cities b
+where a.city_name<>b.city_name;
+
+
+----------------------------end---------------------------------------------------------------------
