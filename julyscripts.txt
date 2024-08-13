@@ -287,3 +287,45 @@ where a.city_name<>b.city_name;
 
 
 ----------------------------end---------------------------------------------------------------------
+
+---13082024------------------------------------------
+select empno,ename,mgr from emp;
+
+select mgr,
+       listagg(ename,',') within group(order by ename) emplist,
+       count(*) no_of_emp
+from emp
+group by mgr;
+
+--1st Method
+select empno,ename,a.mgr,b.emplist,nvl(b.empcount,0) empcount
+from 
+emp a left outer join(select mgr,
+                      listagg(ename,',') within group(order by ename) emplist,
+                      count(*) empcount
+                      from emp
+                      group by mgr) b 
+on a.empno=b.mgr
+order by empno;
+
+--2nd Method
+select empno,ename,e.mgr,(select 
+                        listagg(ename,',') within group(order by ename) emplist
+                        from emp i
+                        where i.mgr=e.empno) emplist,
+                        (select 
+                         count(*)
+                        from emp i
+                        where i.mgr=e.empno) empcount
+from emp e
+order by empno;
+
+--3rd Method
+select m.empno,m.ename,
+       listagg(e.ename,',') within group(order by e.ename) emplist,
+       count(e.ename) empcount
+from emp m
+left outer join emp e on m.empno=e.mgr
+group by m.empno,m.ename
+order by m.empno;
+----------------------------------end----------------------------------------------------------
