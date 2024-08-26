@@ -329,3 +329,121 @@ left outer join emp e on m.empno=e.mgr
 group by m.empno,m.ename
 order by m.empno;
 ----------------------------------end----------------------------------------------------------
+---14062024--------------------------------------------
+--delete from service;
+-- create table service
+-- (
+--     service_code varchar2(10),
+--     service_name varchar2(50)
+--     );
+
+-- insert into service values('A','Service-A');
+-- insert into service values('B','Service-B');
+-- insert into service values('C','Service-C');
+-- insert into service values('D','Service-D');
+-- commit;
+
+-- create table product_service
+-- (
+--     product_code varchar(10),
+--     product_desc varchar(50),
+--     service_order varchar(50)
+-- );
+
+--delete from product_service;
+
+-- insert into product_service values('P1','PROD-P1','A,C');
+-- insert into product_service values('P2','PROD-P2','C,B,D');
+-- insert into product_service values('P3','PROD-P3','D,A,C,B');
+-- insert into product_service values('P4','PROD-P4','A,B,C,D');
+-- insert into product_service values('P5','PROD-P5','D,C,B,A,B');
+-- commit;
+-- select * from service;
+
+
+
+select product_code,product_desc,service_order,--l,
+       listagg(service.service_name,',') within group(order by l) service_list
+    --regexp_substr(service_order,'(.*?,){'||(l-1)||'}([^,]*)',1,1,'',2) rstr
+from product_service,service,
+    lateral(select level l from dual connect by level<=regexp_count(service_order,',')+1)
+where service.service_code=regexp_substr(service_order,'(.*?,){'||(l-1)||'}([^,]*)',1,1,'',2)
+    group by product_code,product_desc,service_order
+    order by product_code;
+
+-------------------------------------------------end-----------------------------------------------------------------
+
+---16082024--Oracle SQL Practical question Write a SQL to generate all the date range for the transaction records
+
+select * from daily_trans;
+
+alter session set nls_date_format='dd-MM-yyyy';
+
+with t1 as 
+       (
+       select trunc(min(tran_date),'Month') startdate,
+       last_day(max(tran_date)) enddate ,
+       last_day(max(tran_date))-trunc(min(tran_date),'Month')+1 days
+       from daily_trans
+       ),
+     t2 as
+     (select startdate+level-1 tran_date from t1
+      connect by level<=days
+      )
+      select t2.tran_date,t3.tran_desc,nvl(t3.tran_amount,0) tran_amount
+      from t2 left outer join daily_trans t3 on t2.tran_date=t3.tran_date
+      order by t2.tran_date;
+      
+--testing with insert into the daily_trans table
+--insert1
+insert into daily_trans values('13-04-2019','Bill Payment',6000);
+--insert2
+insert into daily_trans values('15-07-2019','Bill Received',7000);
+
+--testing with delete from daily_trans table
+delete from daily_trans where tran_date='15-07-2019';
+
+delete from daily_trans where tran_date='13-04-2019';
+----------------------------------------------end--------------------------------------
+
+--------21082024------------------------------------------------------
+
+alter session set nls_date_format='dd-mm-yyyy';
+
+with t1 as 
+(
+select to_date('21-sep-2024','dd-Mon-yyyy') dt from dual
+),
+t2 as (select trunc(dt,'Mon') startdate,
+       last_day(dt) enddate,
+       last_day(dt)-trunc(dt,'Mon')+1 noofdays
+from t1),
+t3 as (select startdate+level-1 dt from t2 connect by level<=noofdays)
+select --dt,
+       trim(to_char(dt,'day')) days,
+       count(*) count from t3
+where trim(to_char(dt,'day')) in('saturday','sunday')
+group by trim(to_char(dt,'day'));
+---------------------------------------------------------end----------------------------------------------------
+
+
+-----26082024-----------------------------------------------------------------------------------------------
+
+with t1 as
+(
+select team_a,
+       case when team_a=winner then 1 else 0 end ta_c,
+       team_b,       
+       case when team_b=winner then 1 else 0 end tb_c
+from cricket
+),t2 as(select team_a,ta_c,team_b,tb_c,l,
+        decode(l,1,team_a,team_b) teams,
+        decode(l,1,ta_c,tb_c) cnt
+from t1,
+ (select level l from dual connect by level<=2))
+ select teams,count(cnt) matches_played,sum(cnt) matches_won,
+        count(cnt)-sum(cnt) matches_lost
+ from t2
+ group by teams;
+
+ --------------------------------end------------------------------------------------
