@@ -447,3 +447,64 @@ from t1,
  group by teams;
 
  --------------------------------end------------------------------------------------
+
+ -------- 27082024  dice roll
+with t1 as
+(
+select level l from dual
+connect by level<=6)
+select '('||a.l||','||b.l||','||c.l||')' dice from t1 a,t1 b,t1 c
+where c.l=a.l+b.l;
+
+
+with t1 as
+(
+select level l from dual
+connect by level<=6)
+select '('||a.l||','||b.l||','||c.l||')' dice from t1 a,t1 b,t1 c
+where (c.l=a.l+b.l or b.l=a.l+c.l or a.l=c.l+b.l);
+
+--------------end---------------------------------------------------------------------
+
+-----------28082024---------------------------------
+with ds as
+(
+select '3,10,5,1,7,55,75,100,42,12,17' str from dual
+),
+t1 as (select str,
+       regexp_substr(str,'\w+',1,level) rstr
+from ds
+connect by level<=regexp_count(str,',')+1)
+select listagg(rstr,',') within group(order by to_number(rstr)) result from t1;
+
+
+with ds as
+(
+select 'WELCOME' str from dual
+),
+t1 as
+(
+select str,
+       substr(str,level,1) rstr,
+       level l
+from ds
+connect by level<=length(str)
+)select listagg(rstr) within group(order by rstr ) result from t1;
+
+---reversing the given string
+
+select reverse('WELCOME') str from dual;
+
+with ds as
+(
+select 'WELCOME' str from dual
+),
+t1 as
+(
+select str,
+       substr(str,level,1) rstr,
+       level l
+from ds
+connect by level<=length(str)
+)select listagg(rstr) within group(order by l desc ) result from t1;
+-----------------------------------------------------------------------end----------------------------
