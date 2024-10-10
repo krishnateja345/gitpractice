@@ -1,0 +1,99 @@
+--07072024
+-----Oracle sql practice exercises with solutions-----------
+
+create table snocols
+(
+sno int,
+col1 varchar(2),
+col2 varchar(2),
+col3 varchar(2),
+col4 varchar(2),
+col5 varchar(2)
+);
+
+insert into snocols values(1,'A','B','C','D','E');
+insert into snocols values(2,null,'A','B','C','D');
+insert into snocols values(3,'E',null,null,null,'A');
+insert into snocols values(4,null,'A','E',null,'D');
+insert into snocols values(5,'E','D','C','B',null);
+commit;
+
+
+
+--basic
+select * from snocols where col1='A' or col2='A' or col3='A' or col4='A' or col5='A';
+
+select * from snocols where col1='A'
+union all
+select * from snocols where col2='A'
+union all
+select * from snocols where col3='A'
+union all
+select * from snocols where col4='A'
+union all
+select * from snocols where col5='A';
+
+--advanced
+select * from snocols where 'A' in(col1,col2,col3,col4,col5);
+
+select * from snocols where col1||col2||col3||col4||col5 like '%A%';
+
+select * from snocols where instr(col1||col2||col3||col4||col5,'A')>0;
+
+----------------------------end-----------------------------------------------------
+
+--10102024
+--Oracle sql practice exercise with solution and Practical Interview question
+
+select * from emp;
+
+select * from dept;
+
+--correlated query
+select empno,ename,a.deptno,sal from emp a
+where sal>(select avg(sal) avg_sal from emp b 
+           where b.deptno=a.deptno 
+           group by b.deptno);
+           
+--Inline view 1
+select a.empno,a.ename,a.deptno,a.sal,b.avg_sal 
+from emp a,(select round(avg(sal)) avg_sal,deptno from emp
+group by deptno) b where b.deptno=a.deptno and a.sal>b.avg_sal
+order by a.empno;
+
+--Inline view 2
+select * from 
+(
+select a.empno,a.ename,a.deptno,a.sal, 
+       (select round(avg(sal)) avg_sal from emp b
+        where b.deptno=a.deptno) avg_sal
+from emp a ) where sal>avg_sal
+order by empno;
+
+--analytical function
+select * from 
+        (
+        select empno,ename,deptno,sal,
+               round(avg(sal) over(partition by deptno order by deptno)) avg_sal
+        from 
+        emp
+        )where sal>avg_sal order by empno;
+        
+
+--Using Function
+create or replace function get_avgsal(p_deptno int)
+return number
+as
+v_avg_sal number;
+begin
+select trunc(avg(sal)) into v_avg_sal from emp where deptno=p_deptno;
+return v_avg_sal;
+end;
+/
+
+select empno,ename,sal,get_avgsal(deptno) avgsal 
+from emp 
+where sal>get_avgsal(deptno);
+
+
+-------------------------end------------------------------------
