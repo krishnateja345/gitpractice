@@ -97,3 +97,169 @@ where sal>get_avgsal(deptno);
 
 
 -------------------------end------------------------------------
+
+--11102024
+--Oracle SQL Practical question with answer Write a SQL to print Cricket Dashboard
+--using with CTE
+select * from cricket;
+
+with t1 as
+(
+select team,
+       count(*) matches_played 
+from
+    (
+    select team_a team from cricket
+    union all
+    select team_b from cricket
+    )
+group by team),
+t2 as
+(
+select winner team,
+       count(*) matches_won 
+from cricket
+group by winner)
+select t1.team,
+       t1.matches_played,
+       nvl(t2.matches_won,0) matches_won,
+       t1.matches_played-nvl(t2.matches_won,0) matches_lost
+from t1 left outer join t2 on t1.team=t2.team
+order by t1.team;
+
+--using function
+
+select * from cricket;
+
+create or replace function matchesplayed(p_team char)
+return number
+as 
+v_matches_played number;
+begin
+select count(*) into v_matches_played
+from cricket 
+where team_a=p_team or team_b=p_team;
+return v_matches_played;
+end;
+/
+
+create or replace function matcheswon(p_team char)
+return number
+as 
+v_matches_won number;
+begin
+select count(*) into v_matches_won
+from cricket 
+where winner=p_team;
+return v_matches_won;
+end;
+/
+
+select matchesplayed('INDIA') from dual;
+
+select team,
+       matchesplayed(team) matches_played,
+       matcheswon(team) matches_won,
+       matchesplayed(team)-matcheswon(team) matches_lost
+from
+(
+select distinct team
+from
+(
+select team_a team from cricket
+union all
+select team_b from cricket
+)) order by team;
+
+-----------------------------end----------------------------------------------------
+
+--13102024
+--QUERY TO FIND THE DATA FROM TAB1 WHICH IS NOT PRESENT IN TAB2
+select * from tab1;
+
+select * from tab2;
+
+--Basic
+select * from tab1 where c1 not in(select * from tab2);
+
+select * from tab1 where not exists(select * from tab2 where tab2.c1=tab1.c1);
+
+--Advanced
+select tab1.c1 from tab1 left outer join tab2 on tab1.c1=tab2.c1
+where tab2.c1 is null;
+
+select * from tab1 where 1>(select count(*) from tab2 where tab1.c1=tab2.c1);
+
+select * from tab1 where (select count(*) from tab2 where tab1.c1=tab2.c1)=0;
+
+select * from tab1 
+minus 
+select * from tab2;
+
+--------------END----------------------------------------------------------
+
+--14102024
+--Generating Sequence Numbers
+
+select rownum,e.* from emp e;
+
+select rownum,d.* from dual d;
+
+select rownum from dual
+connect by level<=10;
+
+with t1(id) as
+(select 1 id from dual
+union all
+select id+1 from t1
+where id<20
+)
+select * from t1;
+
+select rownum from
+(
+select 1 from dual
+group by cube(1,2,3,4))
+where rownum<=10;
+
+select rownum from xmltable( '1 to 10' );
+
+------------------------------end---------------------------------
+
+--15102024
+--query to print the given string in different patterns
+with ds as
+(
+select 'WELCOME' str from dual
+)
+select str,
+       substr(str,level,1) rstr1,
+       substr(str,level*-1,1) rstr2,
+       substr(str,1,level) rstr3,
+       substr(str,level) rstr4,
+       rpad(' ',level+1,' ')||substr(str,level) rstr5,
+       rpad(' ',length(str)-level,' ')||substr(str,1,level) rstr6
+from ds connect by level<=length(str);
+------------------------------------end---------------------------------------------
+
+--16102024
+----------Oracle SQL Practical question with answer extract names from mail id using SQL function
+with ds as
+(
+select 'krishna.teja.345@gmail.com' m from dual
+),
+t1 as(select m,
+        instr(m,'@') mdot,
+        substr(m,instr(m,'@')+1) domain,
+        substr(m,1,instr(m,'@')-1) name,
+        instr(m,'.',1,1) fdot,
+        instr(m,'.',1,2) sdot
+from ds)
+select m,name, 
+       substr(name,1,fdot-1) fname,
+       substr(name,fdot+1,sdot-fdot-1) mname,
+       substr(name,sdot+1,mdot-sdot-1) lname,
+       domain
+from t1;
+
+----------------------------------end------------------------------------------
