@@ -263,3 +263,184 @@ select m,name,
 from t1;
 
 ----------------------------------end------------------------------------------
+
+---17102024
+--Oracle SQL Practical question with answer extract names from mail id using SQL function
+
+with ds as
+(
+select mail_name m from mail_det1
+),
+t1 as(select m, 
+         substr(m,1,instr(m,'@',1,1)-1) n,
+         substr(m,instr(m,'@',1,1)+1) dname,
+         instr(m,'@',1,1) mdot,
+         instr(substr(m,1,instr(m,'@',1,1)-1),'.',1,1) fdot,
+         instr(substr(m,1,instr(m,'@',1,1)-1),'.',1,2) sdot
+from ds)
+select m,n,--mdot,fdot,sdot,
+       decode(fdot,0,substr(n,1,length(n)),substr(n,1,fdot-1)) fname,
+       decode(sdot,0,null,substr(n,fdot+1,sdot-fdot-1)) mname,
+       decode(fdot+sdot,0,null,decode(sdot,0,substr(n,fdot+1),substr(n,sdot+1))) lname,
+       dname
+from t1;
+
+--test cases
+select * from mail_det1;
+
+insert into mail_det1 values('acer.123@gmail.com');
+insert into mail_det1 values('eshwarkrishna@hotmail.com');
+insert into mail_det1 values('a.b.c@gmail.com');
+------------------------------------end-----------------------------------------------
+
+--21102024
+--Oracle SQL Practical question with answer calculate the group salary
+
+--Using Query(Inline)
+
+select EMPNO, ENAME,  MGR,  SAL from emp;
+
+select --sum(sal)
+sys_connect_by_path(ename,'-->'),
+sys_connect_by_path(empno,'-->')
+from emp
+connect by prior empno=mgr
+start with ename='MILLER';
+
+select EMPNO, ENAME,  MGR,  SAL,
+       (select sum(sal)
+        from emp i
+        connect by prior empno=mgr
+        start with ename=o.ename) grp_Sal
+from emp o;
+
+--Using Function
+create or replace function get_group_sal(p_ename char)
+return number
+as
+v_grp_sal number;
+begin
+        select sum(sal) into v_grp_sal
+        from emp i
+        connect by prior empno=mgr
+        start with ename=p_ename;
+return v_grp_sal;
+end;
+/
+
+select get_group_sal('JONES') from dual;
+
+select empno,ename,sal,get_group_sal(ename) grp_sal
+from emp;
+
+-----------------end-----------------------------------------------------------------
+
+--22102024
+--Oracle SQL Practical question with answer Compute Student Result Dashboard
+--Dept on Y-Axis and Year on X-Axis
+select dept,
+       max(case when year=1 then cnt end) I,
+       max(case when year=2 then cnt end) II,
+       max(case when year=3 then cnt end) III,
+       max(case when year=4 then cnt end) IV
+from
+(
+select dept,year,--count(*),
+       'P='||count(case when result='P' then result end)||
+       ',F='||count(case when result='F' then result end) cnt
+from students
+group by dept,year
+order by dept,year
+)group by dept;
+
+--Dept on X-Axis and Year on Y-Axis
+select year,
+       max(case when dept='EEE' then cnt end) EEE,
+       max(case when dept='CSE' then cnt end) CSE,
+       max(case when dept='CVE' then cnt end) CVE,
+       max(case when dept='MECH' then cnt end) MECH,
+       max(case when dept='ECE' then cnt end) ECE
+from
+(
+select dept,year,--count(*),
+       'P='||count(case when result='P' then result end)||
+       ',F='||count(case when result='F' then result end) cnt
+from students
+group by dept,year
+order by dept,year
+)group by year
+order by year;
+
+
+--Using Functions
+
+create or replace function get_year_x_axis(p_dname char,p_year int)
+return char
+as
+v_p_f_count varchar(100);
+begin
+select 
+       'P='||count(case when result='P' then result end)||
+       ',F='||count(case when result='F' then result end) into v_p_f_count
+from students
+where dept=p_dname and year=p_year;
+return v_p_f_count;
+end;
+/
+
+
+select dept, GET_YEAR_X_AXIS(dept,1) I,
+             GET_YEAR_X_AXIS(dept,2) II,
+             GET_YEAR_X_AXIS(dept,3) III,
+             GET_YEAR_X_AXIS(dept,4) IV
+from (select distinct dept from students);
+
+
+--Using Function
+
+create or replace function get_year_y_axis(p_dname char,p_year int)
+return char
+as
+v_p_f_count varchar(100);
+begin
+select 
+       'P='||count(case when result='P' then result end)||
+       ',F='||count(case when result='F' then result end) into v_p_f_count
+from students
+where dept=p_dname and year=p_year;
+return v_p_f_count;
+end;
+/
+
+
+select year, GET_YEAR_Y_AXIS('ECE',year) ECE,
+             GET_YEAR_Y_AXIS('EEE',year) EEE,
+             GET_YEAR_Y_AXIS('CSE',year) CSE,
+             GET_YEAR_Y_AXIS('CVE',year) CVE,
+             GET_YEAR_Y_AXIS('MECH',year) MECH
+from (select distinct year from students)
+order by year;
+
+--Using Pivot Year on X-Axis
+
+select * from 
+(
+select dept,year,--count(*),
+       'P='||count(case when result='P' then result end)||
+       ',F='||count(case when result='F' then result end) cnt
+from students
+group by dept,year
+order by dept,year)pivot(max(cnt) for year in(1 I,2 II,3 III,4 IV));
+
+--Using Pivot Year on Y-Axis
+
+select * from 
+(
+select dept,year,--count(*),
+       'P='||count(case when result='P' then result end)||
+       ',F='||count(case when result='F' then result end) cnt
+from students
+group by dept,year
+order by dept,year)pivot(max(cnt) for dept in('EEE' EEE,'CSE' CSE,'CVE' CVE,'MECH' MECH,'ECE' ECE));
+
+----------------------------------------------------end-----------------------------------------------------------------------------
