@@ -34,4 +34,11 @@ select 'welcome' col1,'to' col2, 'oracle' col3,'class' col4 from dual;
 select col_name,col_val from 
 (select 'welcome' col1,'to' col2, 'oracle' col3,'class' col4 from dual)
 unpivot(col_val for col_name in(col1,col2,col3,col4));
+
+select * from 
+(
+select to_char(empno) empno,ename,job from emp)
+unpivot(col_val for col_name in(empno,ename,job));
+
+desc emp;
 -------------------------------end--------------------------------------------------
